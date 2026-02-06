@@ -295,12 +295,12 @@ const Dashboard: React.FC = () => {
                     <Box w="full" p={3} bg="#2a2a2a" borderRadius="md" border="1px" borderColor="gray.600">
                       <Text fontWeight="bold" color="white">Class</Text>
                       <Text fontSize="sm" color="gray.300">{character.classes?.name || 'Unknown'}</Text>
-                      <Text fontSize="xs" color="gray.400">{character.classes?.description || 'No description available'}</Text>
+                      <Text fontSize="xs" color="gray.400">{character.classes?.description || ''}</Text>
                     </Box>
                     <Box w="full" p={3} bg="#2a2a2a" borderRadius="md" border="1px" borderColor="gray.600">
                       <Text fontWeight="bold" color="white">Species</Text>
                       <Text fontSize="sm" color="gray.300">{character.species?.name || 'Unknown'}</Text>
-                      <Text fontSize="xs" color="gray.400">{character.species?.description || 'No description available'}</Text>
+                      <Text fontSize="xs" color="gray.400">{character.species?.description || ''}</Text>
                     </Box>
                   </VStack>
                 </VStack>

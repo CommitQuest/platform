@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
       <Container maxW="container.xl">
         <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
           <Text fontSize="sm" color="gray.400">
-            © 2025 CommitQuest. Thank you to Adam and everyone else along the way!
+            © 2026 CommitQuest. Thank you to Adam and everyone else along the way!
           </Text>
           
           <Flex gap={6} fontSize="sm">

@@ -7,6 +7,7 @@ import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import Character from './pages/Character';
 import Friends from './pages/Friends';
+import Shop from './pages/Shop';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 
@@ -34,6 +35,11 @@ function App() {
               <Route path="/friends" element={
                 <Layout>
                   <Friends />
+                </Layout>
+              } />
+              <Route path="/shop" element={
+                <Layout>
+                  <Shop />
                 </Layout>
               } />
             </Routes>

@@ -47,8 +47,38 @@ const getRequestsReceived = (data: any): FriendRequest[] =>
   Array.isArray(data?.received) ? data.received : [];
 const getRequestsSent = (data: any): FriendRequest[] =>
   Array.isArray(data?.sent) ? data.sent : [];
-const getLeaderboardEntries = (data: any): LeaderboardEntry[] =>
-  Array.isArray(data?.entries) ? data.entries : Array.isArray(data?.leaderboard) ? data.leaderboard : Array.isArray(data) ? data : [];
+// Normalize leaderboard entry so we always have character_name / character_avatar_url from whatever the backend sends
+function normalizeLeaderboardEntry(raw: any): LeaderboardEntry {
+  const characterName =
+    raw.character_name ??
+    raw.character?.name ??
+    raw.user_character?.name;
+  const characterAvatarUrl =
+    raw.character_avatar_url ??
+    raw.character?.avatar_url ??
+    raw.user_character?.avatar_url;
+  return {
+    rank: raw.rank,
+    user_id: raw.user_id,
+    github_username: raw.github_username ?? '',
+    avatar_url: raw.avatar_url,
+    character_name: characterName || undefined,
+    character_avatar_url: characterAvatarUrl || undefined,
+    value: raw.value ?? 0,
+    metric: raw.metric ?? 'experience_gained',
+  };
+}
+
+const getLeaderboardEntries = (data: any): LeaderboardEntry[] => {
+  const raw = Array.isArray(data?.entries)
+    ? data.entries
+    : Array.isArray(data?.leaderboard)
+      ? data.leaderboard
+      : Array.isArray(data)
+        ? data
+        : [];
+  return raw.map(normalizeLeaderboardEntry);
+};
 const getGithubConnections = (data: any): GithubConnection[] =>
   Array.isArray(data?.connections) ? data.connections : Array.isArray(data?.users)
     ? (data.users as User[]).map((u) => ({ user: u, connection_type: 'mutual' as const }))
@@ -114,6 +144,44 @@ const Friends: React.FC = () => {
       setLoading(false);
     }
   }, [loadFriendsData]);
+
+  // Fetch character name/avatar for leaderboard entries that don't have it (same as Dashboard uses)
+  useEffect(() => {
+    const needCharacter = leaderboard.filter((e) => e.user_id && !e.character_name);
+    if (needCharacter.length === 0) return;
+
+    const fetchCharacters = async () => {
+      const results = await Promise.allSettled(
+        needCharacter.map((e) => api.userAPI.getUserCharacter(e.user_id))
+      );
+      const byUserId: Record<number, { character_name: string; character_avatar_url?: string }> = {};
+      results.forEach((res, i) => {
+        if (res.status !== 'fulfilled' || !res.value) return;
+        const data = res.value;
+        const name = data?.character?.name ?? data?.name;
+        const avatarUrl = data?.character?.avatar_url ?? data?.avatar_url;
+        if (name && needCharacter[i]) {
+          byUserId[needCharacter[i].user_id] = {
+            character_name: name,
+            character_avatar_url: avatarUrl,
+          };
+        }
+      });
+      setLeaderboard((prev) =>
+        prev.map((entry) => {
+          const fetched = byUserId[entry.user_id];
+          if (fetched)
+            return {
+              ...entry,
+              character_name: fetched.character_name,
+              character_avatar_url: fetched.character_avatar_url,
+            };
+          return entry;
+        })
+      );
+    };
+    fetchCharacters();
+  }, [leaderboard]);
 
   const handleSearch = async () => {
     const q = searchQuery.trim();
@@ -378,12 +446,7 @@ const Friends: React.FC = () => {
                       <Alert status="info" bg="#1a2a2a" borderColor="green.500">
                         <AlertIcon />
                         <Box>
-                          <AlertTitle>No GitHub connections on CommitQuest</AlertTitle>
-                          <AlertDescription>
-                            If the backend implements <code>/api/user/github-connections</code>, this section will show
-                            your GitHub followers and people you follow who also use CommitQuest. That endpoint would
-                            call GitHub&apos;s API with your token and match usernames to our users table.
-                          </AlertDescription>
+                          <AlertTitle color="white">No GitHub connections on CommitQuest</AlertTitle>
                         </Box>
                       </Alert>
                     )}
@@ -489,9 +552,22 @@ const Friends: React.FC = () => {
                           <Tr key={entry.user_id}>
                             <Td color="white">#{entry.rank}</Td>
                             <Td>
-                              <HStack>
-                                <Avatar size="xs" src={entry.avatar_url} name={entry.github_username} />
-                                <Text color="white">{entry.github_username}</Text>
+                              <HStack spacing={2}>
+                                <Avatar
+                                  size="sm"
+                                  src={entry.character_avatar_url ?? entry.avatar_url}
+                                  name={entry.character_name ?? entry.github_username}
+                                />
+                                <VStack align="start" spacing={0}>
+                                  <Text color="white" fontWeight="medium">
+                                    {entry.character_name || entry.github_username}
+                                  </Text>
+                                  {entry.character_name && (
+                                    <Text fontSize="xs" color="gray.500">
+                                      @{entry.github_username}
+                                    </Text>
+                                  )}
+                                </VStack>
                               </HStack>
                             </Td>
                             <Td color="green.400" isNumeric>

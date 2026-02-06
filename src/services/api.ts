@@ -1,10 +1,29 @@
 // API service for communicating with the backend
 
 // Use local backend when running on localhost (local dev)
-const API_BASE_URL =
-  typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:3001'
-    : (process.env.REACT_APP_API_URL || 'https://commit-quest-app-3914e1ae3b5a.herokuapp.com');
+// Normalize: no trailing slash, no surrounding quotes (from .env)
+function normalizeBaseUrl(url: string | undefined): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim().replace(/^['"]|['"]$/g, '').replace(/\/+$/, '');
+  return trimmed;
+}
+
+const DEFAULT_API_URL = 'https://commit-quest-app-3914e1ae3b5a.herokuapp.com';
+
+// Use REACT_APP_API_URL when set (so localhost can point at Heroku); else localhost → local backend
+function getApiBaseUrl(): string {
+  const fromEnv = normalizeBaseUrl(process.env.REACT_APP_API_URL);
+  if (fromEnv) return fromEnv;
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:3001';
+  }
+  return DEFAULT_API_URL;
+}
+
+const API_BASE_URL = getApiBaseUrl();
+
+/** Base URL of the backend (for auth redirects, etc.). Respects REACT_APP_API_URL. */
+export const getBackendUrl = (): string => getApiBaseUrl();
 
 // Get auth token from localStorage
 const getAuthToken = (): string | null => {
@@ -36,7 +55,8 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<
   };
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const url = endpoint.startsWith('/') ? `${API_BASE_URL}${endpoint}` : `${API_BASE_URL}/${endpoint}`;
+    const response = await fetch(url, config);
     
     if (!response.ok) {
       if (response.status === 401) {

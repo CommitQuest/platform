@@ -16,6 +16,10 @@ import {
 } from '@chakra-ui/react';
 import { FaGithub } from 'react-icons/fa';
 import { useSearchParams } from 'react-router-dom';
+import { getBackendUrl } from '../services/api';
+
+const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
+const DEFAULT_SCOPE = 'read:user user:email';
 
 const ERROR_MESSAGES: Record<string, string> = {
   access_denied: 'You denied access to your GitHub account.',
@@ -36,13 +40,28 @@ const Login: React.FC = () => {
   const errorMessage = errorParam ? (ERROR_MESSAGES[errorParam] ?? `Authentication error: ${errorParam}`) : null;
 
   const handleGitHubLogin = () => {
-    // Use local backend when running on localhost (local dev)
-    const backendUrl =
-      typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        ? 'http://localhost:3001'
-        : (process.env.REACT_APP_API_URL || 'https://commit-quest-app-3914e1ae3b5a.herokuapp.com');
-
-    window.location.href = `${backendUrl}/api/auth/web/github`;
+    const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    // Direct to GitHub OAuth so the user never hits the backend URL (avoids "dangerous site" / stuck on Heroku)
+    if (clientId && clientId.trim()) {
+      const backendUrl = getBackendUrl();
+      const redirectUri = `${backendUrl}/api/auth/web/callback`;
+      const returnUrl = typeof window !== 'undefined' ? `${window.location.origin}/web/auth/callback` : '';
+      const state = btoa(JSON.stringify({ r: returnUrl, n: Math.random().toString(36).slice(2) }));
+      const params = new URLSearchParams({
+        client_id: clientId.trim(),
+        redirect_uri: redirectUri,
+        scope: process.env.REACT_APP_GITHUB_SCOPE?.trim() || DEFAULT_SCOPE,
+        state,
+      });
+      window.location.href = `${GITHUB_AUTH_URL}?${params.toString()}`;
+      return;
+    }
+    // Fallback: backend starts the flow. Tell backend where to send the user after login (so you land on localhost:3000, not Heroku).
+    const returnTo = typeof window !== 'undefined' ? `${window.location.origin}/web/auth/callback` : '';
+    const params = new URLSearchParams();
+    if (returnTo) params.set('return_to', returnTo);
+    const query = params.toString();
+    window.location.href = `${getBackendUrl()}/api/auth/web/github${query ? `?${query}` : ''}`;
   };
 
   return (

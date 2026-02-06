@@ -66,7 +66,9 @@ export interface LeaderboardEntry {
   rank: number;
   user_id: number;
   github_username: string;
-  avatar_url?: string;
+  avatar_url?: string; // GitHub avatar (fallback if no character)
+  character_name?: string;
+  character_avatar_url?: string; // Character image to show in leaderboard
   value: number; // e.g. experience_gained in timeframe
   metric: string;
 }
