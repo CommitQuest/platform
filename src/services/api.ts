@@ -99,6 +99,37 @@ export const userAPI = {
   },
 };
 
+// Friends API calls (backend must implement these endpoints)
+export const friendsAPI = {
+  // List current user's friends (optionally with mutual counts)
+  getFriends: () => apiRequest('/api/friends'),
+  // Mutual friends only (friends you have in common with others)
+  getMutualFriends: () => apiRequest('/api/friends/mutual'),
+  // Pending friend requests (sent and received)
+  getFriendRequests: () => apiRequest('/api/friends/requests'),
+  // Send friend request
+  sendFriendRequest: (receiverId: number) =>
+    apiRequest('/api/friends/requests', {
+      method: 'POST',
+      body: JSON.stringify({ receiver_id: receiverId }),
+    }),
+  // Accept friend request
+  acceptFriendRequest: (requestId: number) =>
+    apiRequest(`/api/friends/requests/${requestId}/accept`, { method: 'POST' }),
+  // Reject friend request
+  rejectFriendRequest: (requestId: number) =>
+    apiRequest(`/api/friends/requests/${requestId}/reject`, { method: 'POST' }),
+  // Remove friend
+  removeFriend: (friendId: number) =>
+    apiRequest(`/api/friends/${friendId}`, { method: 'DELETE' }),
+};
+
+// GitHub connections: users you follow or who follow you on GitHub and are on CommitQuest
+// Backend uses GitHub API (with user's token) to fetch followers/following, then matches with users table
+export const githubConnectionsAPI = {
+  getConnections: () => apiRequest('/api/user/github-connections'),
+};
+
 // Character API calls
 export const characterAPI = {
   // Get character data
@@ -150,6 +181,8 @@ const api = {
   assetsAPI,
   statsAPI,
   dashboardAPI,
+  friendsAPI,
+  githubConnectionsAPI,
   isLoggedIn,
   logout,
 };

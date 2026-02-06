@@ -58,6 +58,23 @@ export interface Friendship {
   friend_id: number;
   created_at: string;
   friend: User;
+  mutual_count?: number; // number of mutual friends (if API provides it)
+}
+
+// Leaderboard entry (e.g. weekly XP)
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: number;
+  github_username: string;
+  avatar_url?: string;
+  value: number; // e.g. experience_gained in timeframe
+  metric: string;
+}
+
+// GitHub connection: GitHub follower/following who is also on CommitQuest
+export interface GithubConnection {
+  user: User;
+  connection_type: 'following' | 'follower' | 'mutual';
 }
 
 // Shop types

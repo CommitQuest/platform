@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import Character from './pages/Character';
+import Friends from './pages/Friends';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 
@@ -28,6 +29,11 @@ function App() {
               <Route path="/character" element={
                 <Layout>
                   <Character />
+                </Layout>
+              } />
+              <Route path="/friends" element={
+                <Layout>
+                  <Friends />
                 </Layout>
               } />
             </Routes>
