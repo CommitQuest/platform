@@ -1,25 +1,40 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { ChakraProvider, Box } from '@chakra-ui/react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { UserProvider } from './contexts/UserContext';
+import Layout from './components/layout/Layout';
+import LandingPage from './pages/LandingPage';
+import Dashboard from './pages/Dashboard';
+import Character from './pages/Character';
+import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ChakraProvider>
+      <UserProvider>
+        <Router>
+          <Box minH="100vh">
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/web/auth/callback" element={<AuthCallback />} />
+              <Route path="/dashboard" element={
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              } />
+              <Route path="/character" element={
+                <Layout>
+                  <Character />
+                </Layout>
+              } />
+            </Routes>
+          </Box>
+        </Router>
+      </UserProvider>
+    </ChakraProvider>
   );
 }
 
