@@ -175,6 +175,14 @@ export const achievementAPI = {
 export const assetsAPI = {
   // Get active background
   getActiveBackground: () => apiRequest('/api/assets/background'),
+  // List user's owned backgrounds
+  getBackgrounds: () => apiRequest('/api/assets/backgrounds'),
+  // Equip a background by id
+  equipBackground: (backgroundId: number) =>
+    apiRequest('/api/assets/background/equip', {
+      method: 'POST',
+      body: JSON.stringify({ background_id: backgroundId }),
+    }),
   // Get user inventory
   getUserInventory: () => apiRequest('/api/assets/inventory'),
 };

@@ -19,19 +19,102 @@ import {
   SimpleGrid,
   Tooltip,
   Avatar,
+  Button,
 } from '@chakra-ui/react';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
 import { UserInventory, InventoryResponse } from '../types';
 
+interface OwnedBackground {
+  id: number;
+  background_1?: string;
+  background_2?: string;
+  background_3?: string;
+  background_4?: string;
+  foregound_1?: string;
+  foreground_1?: string;
+  foreground_2?: string;
+  cost?: number;
+  inventory_id: number;
+  equipped: boolean;
+}
+
 const Inventory: React.FC = () => {
   const { user, loading, error } = useUser();
   const [inventory, setInventory] = useState<UserInventory[]>([]);
+  const [backgrounds, setBackgrounds] = useState<OwnedBackground[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
+  const [backgroundsLoading, setBackgroundsLoading] = useState(true);
+  const [equippingId, setEquippingId] = useState<number | null>(null);
   const [, setInventoryError] = useState<string | null>(null);
   
   const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
   const borderColor = useColorModeValue('#333333', '#333333');
+
+  // Generate background layers for preview (matches Dashboard style)
+  const generateBackgroundLayers = (bg: OwnedBackground) => {
+    const backgroundKeys = ['background_1', 'background_2', 'background_3', 'background_4'];
+    return backgroundKeys.map((key, index) => {
+      const layerUrl = bg[key as keyof OwnedBackground];
+      if (layerUrl) {
+        return (
+          <Box
+            key={key}
+            position="absolute"
+            bottom={0}
+            left={0}
+            width="100%"
+            height="100%"
+            backgroundImage={`url(${layerUrl})`}
+            backgroundSize="cover"
+            backgroundPosition="center top"
+            backgroundRepeat="no-repeat"
+            zIndex={index + 1}
+          />
+        );
+      }
+      return null;
+    });
+  };
+
+  const generateForegroundLayers = (bg: OwnedBackground) => {
+    const foregroundKeys = ['foreground_1', 'foreground_2'];
+    return foregroundKeys.map((key, index) => {
+      const layerUrl = key === 'foreground_1' ? (bg.foregound_1 || bg.foreground_1) : bg.foreground_2;
+      if (layerUrl) {
+        return (
+          <Box
+            key={key}
+            position="absolute"
+            bottom={0}
+            left={0}
+            width="100%"
+            height="100%"
+            backgroundImage={`url(${layerUrl})`}
+            backgroundSize="cover"
+            backgroundPosition="center top"
+            backgroundRepeat="no-repeat"
+            zIndex={6 + index}
+          />
+        );
+      }
+      return null;
+    });
+  };
+
+  const handleEquipBackground = async (backgroundId: number) => {
+    try {
+      setEquippingId(backgroundId);
+      await assetsAPI.equipBackground(backgroundId);
+      setBackgrounds(prev =>
+        prev.map(b => ({ ...b, equipped: b.id === backgroundId }))
+      );
+    } catch (err) {
+      console.error('Failed to equip background:', err);
+    } finally {
+      setEquippingId(null);
+    }
+  };
 
   // Fetch inventory data
   useEffect(() => {
@@ -56,10 +139,27 @@ const Inventory: React.FC = () => {
     fetchInventory();
   }, [user]);
 
+  // Fetch backgrounds
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      if (!user) return;
+      try {
+        setBackgroundsLoading(true);
+        const res = await assetsAPI.getBackgrounds();
+        setBackgrounds(res.backgrounds || []);
+      } catch (err) {
+        console.error('Error fetching backgrounds:', err);
+        setBackgrounds([]);
+      } finally {
+        setBackgroundsLoading(false);
+      }
+    };
+    fetchBackgrounds();
+  }, [user]);
+
   // Filter inventory by asset type
   const items = inventory.filter(item => item.asset_type === 'item');
   const apparel = inventory.filter(item => item.asset_type === 'apparel');
-  const backgrounds = inventory.filter(item => item.asset_type === 'background');
 
   // Get rarity color
   const getRarityColor = (rarity: string) => {
@@ -337,11 +437,77 @@ const Inventory: React.FC = () => {
         )}
 
         {/* Backgrounds Section */}
-        {renderInventorySection(
-          "Backgrounds", 
-          backgrounds, 
-          "No backgrounds found. Visit the shop to buy some!"
-        )}
+        <Card bg={cardBg} border="1px" borderColor={borderColor}>
+          <CardBody>
+            <VStack align="start" spacing={4}>
+              <Heading size="md" color="white">Backgrounds</Heading>
+              
+              {backgroundsLoading ? (
+                <Box display="flex" justifyContent="center" w="full" py={4}>
+                  <VStack spacing={2}>
+                    <Spinner size="md" color="green.400" />
+                    <Text color="gray.300" fontSize="sm">Loading...</Text>
+                  </VStack>
+                </Box>
+              ) : backgrounds.length === 0 ? (
+                <Box textAlign="center" w="full" py={4}>
+                  <Text color="gray.400" fontSize="sm">
+                    No backgrounds found. Visit the shop to buy some!
+                  </Text>
+                </Box>
+              ) : (
+                <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} spacing={4} w="full">
+                  {backgrounds.map((bg) => (
+                    <Card
+                      key={bg.inventory_id}
+                      bg="#2a2a2a"
+                      border="2px"
+                      borderColor={bg.equipped ? 'green.500' : borderColor}
+                      _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                      transition="all 0.2s"
+                      overflow="hidden"
+                    >
+                      <Box
+                        position="relative"
+                        width="100%"
+                        minH="100px"
+                        aspectRatio="1"
+                        overflow="hidden"
+                      >
+                        {generateBackgroundLayers(bg)}
+                        {generateForegroundLayers(bg)}
+                      </Box>
+                      <CardBody p={3}>
+                        <VStack spacing={2}>
+                          {bg.equipped ? (
+                            <Badge colorScheme="green" w="full" textAlign="center">
+                              Equipped
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              colorScheme="green"
+                              w="full"
+                              isLoading={equippingId === bg.id}
+                              onClick={() => handleEquipBackground(bg.id)}
+                            >
+                              Equip
+                            </Button>
+                          )}
+                          {bg.cost != null && (
+                            <Text color="yellow.400" fontSize="xs" fontWeight="bold">
+                              {bg.cost} Gold
+                            </Text>
+                          )}
+                        </VStack>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </SimpleGrid>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
       </VStack>
     </Box>
   );
