@@ -9,13 +9,18 @@ function normalizeBaseUrl(url: string | undefined): string {
 }
 
 const DEFAULT_API_URL = 'https://commit-quest-app-3914e1ae3b5a.herokuapp.com';
+const LOCAL_BACKEND_URL = 'http://localhost:3001';
 
-// Use REACT_APP_API_URL when set (so localhost can point at Heroku); else localhost → local backend
+// Use REACT_APP_API_URL when set (so localhost can point at Heroku); else localhost → local backend.
+// REACT_APP_USE_LOCAL_BACKEND=true (set by `npm run dev`) forces local backend and overrides .env.
 function getApiBaseUrl(): string {
+  if (process.env.REACT_APP_USE_LOCAL_BACKEND === 'true') {
+    return LOCAL_BACKEND_URL;
+  }
   const fromEnv = normalizeBaseUrl(process.env.REACT_APP_API_URL);
   if (fromEnv) return fromEnv;
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3001';
+    return LOCAL_BACKEND_URL;
   }
   return DEFAULT_API_URL;
 }
@@ -154,12 +159,17 @@ export const githubConnectionsAPI = {
 export const characterAPI = {
   // Get character data
   getCharacter: () => apiRequest('/api/character'),
-  
+
+  // Get all classes and species
+  getClasses: () => apiRequest('/api/character/classes'),
+  getSpecies: () => apiRequest('/api/character/species'),
+
   // Update character
-  updateCharacter: (data: any) => apiRequest('/api/character', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
+  updateCharacter: (data: { name?: string; class_id?: number; species_id?: number }) =>
+    apiRequest('/api/character', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 };
 
 // Achievement API calls

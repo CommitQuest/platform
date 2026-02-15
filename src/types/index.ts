@@ -143,6 +143,7 @@ export interface Item {
   stats: Record<string, any>;
   cost: number;
   file_path: string;
+  number_available: number;
   is_active: boolean;
 }
 

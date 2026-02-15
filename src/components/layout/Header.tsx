@@ -11,7 +11,6 @@ import {
   MenuItem,
   MenuDivider,
   useColorModeValue,
-  Text,
   Spinner,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
@@ -44,7 +43,7 @@ const Header: React.FC = () => {
       py={4}
       position="sticky"
       top={0}
-      zIndex={10}
+      zIndex={11}
     >
       <Flex justify="space-between" align="center" maxW="container.xl" mx="auto">
         <Heading size="lg" color="green.400" cursor="pointer" onClick={() => window.location.href = '/'}>
@@ -56,7 +55,7 @@ const Header: React.FC = () => {
             colorScheme="green" 
             variant="ghost" 
             _hover={{ bg: 'green.500', color: 'white' }}
-            onClick={() => window.location.href = '/support'}
+            onClick={() => {}}
           >
             Support
           </Button>
@@ -71,6 +70,8 @@ const Header: React.FC = () => {
                     rightIcon={<ChevronDownIcon />}
                     variant="ghost"
                     px={3}
+                    border="2px solid"
+                    borderColor="green.500"
                     color="white"
                     _hover={{ bg: 'green.500', color: 'white' }}
                     _active={{ bg: 'green.600' }}
@@ -80,14 +81,20 @@ const Header: React.FC = () => {
                       name={user.character?.name || 'User'} 
                       src={user.character?.avatar_url || ''} 
                       mr={2} 
+                      sx={{
+                        img: {
+                          objectFit: 'cover',
+                          objectPosition: 'center',
+                          transform: 'scale(4)',
+                        }
+                      }}
                     />
-                    <Text>{user.character?.name || 'User'}</Text>
                   </MenuButton>
                   <MenuList bg="#2a2a2a" borderColor="#333333" boxShadow="lg">
-                    <MenuItem color="white" _hover={{ bg: 'green.500' }}>Profile</MenuItem>
-                    <MenuItem color="white" _hover={{ bg: 'green.500' }}>Settings</MenuItem>
-                    <MenuDivider borderColor="#333333" />
-                    <MenuItem onClick={handleLogout} color="white" _hover={{ bg: 'green.500' }}>Logout</MenuItem>
+                    <MenuItem bg="#2a2a2a" color="white" _hover={{ bg: 'green.500' }}>Profile</MenuItem>
+                    {/* <MenuItem bg="#2a2a2a" color="white" _hover={{ bg: 'green.500' }}>Settings</MenuItem> */}
+                    <MenuDivider borderColor="#777777" />
+                    <MenuItem bg="#2a2a2a" onClick={handleLogout} color="white" _hover={{ bg: 'green.500' }}>Logout</MenuItem>
                   </MenuList>
                 </Menu>
               ) : (

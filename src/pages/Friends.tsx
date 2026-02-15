@@ -145,7 +145,6 @@ const Friends: React.FC = () => {
     }
   }, [loadFriendsData]);
 
-  // Fetch character name/avatar for leaderboard entries that don't have it (same as Dashboard uses)
   useEffect(() => {
     const needCharacter = leaderboard.filter((e) => e.user_id && !e.character_name);
     if (needCharacter.length === 0) return;
@@ -532,9 +531,7 @@ const Friends: React.FC = () => {
                     <Spinner color="green.400" />
                   ) : leaderboard.length === 0 ? (
                     <Text color="gray.400">
-                      No leaderboard data yet. The backend should support <code>metric=experience_gained</code> and{' '}
-                      <code>timeframe=week</code> and aggregate from <code>user_stats</code> (sum experience_gained
-                      where date &gt;= last 7 days).
+                      No leaderboard data yet.
                     </Text>
                   ) : (
                     <Table size="sm" variant="simple">

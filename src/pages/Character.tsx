@@ -24,6 +24,7 @@ import {
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
 import { UserInventory, InventoryResponse } from '../types';
+import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
 
 interface OwnedBackground {
   id: number;
@@ -40,7 +41,7 @@ interface OwnedBackground {
 }
 
 const Inventory: React.FC = () => {
-  const { user, loading, error } = useUser();
+  const { user, loading, error, refreshBackground } = useUser();
   const [inventory, setInventory] = useState<UserInventory[]>([]);
   const [backgrounds, setBackgrounds] = useState<OwnedBackground[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
@@ -51,57 +52,6 @@ const Inventory: React.FC = () => {
   const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
   const borderColor = useColorModeValue('#333333', '#333333');
 
-  // Generate background layers for preview (matches Dashboard style)
-  const generateBackgroundLayers = (bg: OwnedBackground) => {
-    const backgroundKeys = ['background_1', 'background_2', 'background_3', 'background_4'];
-    return backgroundKeys.map((key, index) => {
-      const layerUrl = bg[key as keyof OwnedBackground];
-      if (layerUrl) {
-        return (
-          <Box
-            key={key}
-            position="absolute"
-            bottom={0}
-            left={0}
-            width="100%"
-            height="100%"
-            backgroundImage={`url(${layerUrl})`}
-            backgroundSize="cover"
-            backgroundPosition="center top"
-            backgroundRepeat="no-repeat"
-            zIndex={index + 1}
-          />
-        );
-      }
-      return null;
-    });
-  };
-
-  const generateForegroundLayers = (bg: OwnedBackground) => {
-    const foregroundKeys = ['foreground_1', 'foreground_2'];
-    return foregroundKeys.map((key, index) => {
-      const layerUrl = key === 'foreground_1' ? (bg.foregound_1 || bg.foreground_1) : bg.foreground_2;
-      if (layerUrl) {
-        return (
-          <Box
-            key={key}
-            position="absolute"
-            bottom={0}
-            left={0}
-            width="100%"
-            height="100%"
-            backgroundImage={`url(${layerUrl})`}
-            backgroundSize="cover"
-            backgroundPosition="center top"
-            backgroundRepeat="no-repeat"
-            zIndex={6 + index}
-          />
-        );
-      }
-      return null;
-    });
-  };
-
   const handleEquipBackground = async (backgroundId: number) => {
     try {
       setEquippingId(backgroundId);
@@ -109,10 +59,12 @@ const Inventory: React.FC = () => {
       setBackgrounds(prev =>
         prev.map(b => ({ ...b, equipped: b.id === backgroundId }))
       );
+      
     } catch (err) {
       console.error('Failed to equip background:', err);
     } finally {
       setEquippingId(null);
+      refreshBackground();
     }
   };
 
@@ -124,7 +76,7 @@ const Inventory: React.FC = () => {
       try {
         setInventoryLoading(true);
         const response: InventoryResponse = await assetsAPI.getUserInventory();
-        console.log("response", response);
+        console.log("inventory response", response);
         setInventory(response.inventory);
         setInventoryError(null);
       } catch (err) {
@@ -306,6 +258,7 @@ const Inventory: React.FC = () => {
         {/* Header with Character Info and Apparel */}
         <HStack spacing={6} align="start">
           {/* Small Character Avatar */}
+          
           <Box
             bg="#2a2a2a"
             borderRadius="md"
@@ -318,14 +271,33 @@ const Inventory: React.FC = () => {
             alignItems="center"
             justifyContent="center"
             flexShrink={0}
+            position="relative"
+            // overflow="hidden"
+            sx={{
+              img: {
+                objectFit: 'cover',
+                objectPosition: 'center',
+                transform: 'scale(2)',
+              }
+            }}
           >
             <Avatar 
               size="lg" 
               name={character.name} 
               src={character.avatar_url}
               borderRadius="md"
+              position="relative"
+              zIndex={10}
               width="100px"
               height="100px"
+              sx={{
+                img: {
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  transform: 'scale(2)',
+                }
+              }}
+              // style={{ top: '30px' }}
             />
           </Box>
 

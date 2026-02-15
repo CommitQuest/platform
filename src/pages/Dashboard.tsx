@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -21,15 +21,94 @@ import {
   useColorModeValue,
   Image,
   Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { characterAPI } from '../services/api';
+import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
+
+interface ClassOption {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface SpeciesOption {
+  id: number;
+  name: string;
+  description?: string;
+}
 
 const Dashboard: React.FC = () => {
-  const { user, background, loading, error } = useUser();
+  const { user, background, loading, error, refreshUser } = useUser();
   const navigate = useNavigate();
   const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
   const borderColor = useColorModeValue('#333333', '#333333');
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [editName, setEditName] = useState('');
+  const [editClassId, setEditClassId] = useState<string>('');
+  const [editSpeciesId, setEditSpeciesId] = useState<string>('');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [species, setSpecies] = useState<SpeciesOption[]>([]);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // When edit modal opens, populate form and fetch class/species options
+  useEffect(() => {
+    if (!isOpen || !user?.character) return;
+    const c = user.character;
+    setEditName(c.name);
+    setEditClassId(c.classes?.id?.toString() ?? '');
+    setEditSpeciesId(c.species?.id?.toString() ?? '');
+    setEditError(null);
+    (async () => {
+      try {
+        const [classesRes, speciesRes] = await Promise.all([
+          characterAPI.getClasses(),
+          characterAPI.getSpecies(),
+        ]);
+        setClasses(classesRes.classes ?? []);
+        setSpecies(speciesRes.species ?? []);
+      } catch {
+        setEditError('Failed to load options');
+      }
+    })();
+  }, [isOpen, user?.character]);
+
+  const handleSaveCharacter = async () => {
+    if (!editName.trim()) {
+      setEditError('Character name is required');
+      return;
+    }
+    setEditLoading(true);
+    setEditError(null);
+    try {
+      await characterAPI.updateCharacter({
+        name: editName.trim(),
+        class_id: editClassId ? parseInt(editClassId, 10) : undefined,
+        species_id: editSpeciesId ? parseInt(editSpeciesId, 10) : undefined,
+      });
+      await refreshUser();
+      onClose();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update character');
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -80,62 +159,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Generate background layers
-  const generateBackgroundLayers = () => {
-    if (!background) return null;
-    
-    const backgroundKeys = ['background_1', 'background_2', 'background_3', 'background_4'];
-    return backgroundKeys.map((key, index) => {
-      const layerUrl = background[key as keyof typeof background];
-      if (layerUrl) {
-        return (
-          <Box
-            key={key}
-            position="absolute"
-            bottom={0}
-            left={0}
-            width="100%"
-            height="100%"
-            backgroundImage={`url(${layerUrl})`}
-            backgroundSize="cover"
-            backgroundPosition="center top"
-            backgroundRepeat="no-repeat"
-            zIndex={index + 1}
-          />
-        );
-      }
-      return null;
-    });
-  };
-
-  // Generate foreground layers
-  const generateForegroundLayers = () => {
-    if (!background) return null;
-    
-    const foregroundKeys = ['foreground_1', 'foreground_2'];
-    return foregroundKeys.map((key, index) => {
-      const layerUrl = background[key as keyof typeof background];
-      if (layerUrl) {
-        return (
-          <Box
-            key={key}
-            position="absolute"
-            bottom={0}
-            left={0}
-            width="100%"
-            height="100%"
-            backgroundImage={`url(${layerUrl})`}
-            backgroundSize="cover"
-            backgroundPosition="center top"
-            backgroundRepeat="no-repeat"
-            zIndex={6 + index}
-          />
-        );
-      }
-      return null;
-    });
-  };
-
   // Calculate XP progress
   const xpProgress = user.levelProgress ? user.levelProgress.progress : 0;
   const currentXP = user.levelProgress ? user.levelProgress.expInCurrentLevel : 0;
@@ -162,9 +185,15 @@ const Dashboard: React.FC = () => {
             position="relative"
             overflow="hidden"
           >
-            { generateBackgroundLayers() }
-            <Image zIndex={10} src={character.avatar_url} alt="Avatar" />
-            { generateForegroundLayers() }
+            {generateBackgroundLayers(background)}
+            <Image
+              zIndex={10}
+              src={character.avatar_url}
+              alt="Avatar"
+              position="relative"
+              style={{ top: '40px' }}
+            />
+            {generateForegroundLayers(background)}
           </Box>
 
           {/* Character Card */}
@@ -302,6 +331,14 @@ const Dashboard: React.FC = () => {
                       <Text fontSize="sm" color="gray.300">{character.species?.name || 'Unknown'}</Text>
                       <Text fontSize="xs" color="gray.400">{character.species?.description || ''}</Text>
                     </Box>
+                    <Button
+                      w="full"
+                      colorScheme="green"
+                      variant="outline"
+                      onClick={onOpen}
+                    >
+                      Edit Character
+                    </Button>
                   </VStack>
                 </VStack>
               </CardBody>
@@ -309,6 +346,83 @@ const Dashboard: React.FC = () => {
           </GridItem>
         </Grid>
       </VStack>
+
+      <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
+        <ModalOverlay bg="blackAlpha.700" />
+        <ModalContent bg={cardBg} border="1px" borderColor={borderColor}>
+          <ModalHeader color="white">Edit Character</ModalHeader>
+          <ModalCloseButton color="gray.400" />
+          <ModalBody>
+            <VStack spacing={4}>
+              {editError && (
+                <Alert status="error" w="full" size="sm" bg="#2d1b1b" borderColor="red.500">
+                  <AlertIcon />
+                  <Text fontSize="sm">{editError}</Text>
+                </Alert>
+              )}
+              <FormControl>
+                <FormLabel color="gray.300">Character name</FormLabel>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Character name"
+                  bg="#2a2a2a"
+                  borderColor="gray.600"
+                  color="white"
+                  _placeholder={{ color: 'gray.500' }}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel color="gray.300">Class</FormLabel>
+                <Select
+                  value={editClassId}
+                  onChange={(e) => setEditClassId(e.target.value)}
+                  bg="#2a2a2a"
+                  borderColor="gray.600"
+                  color="white"
+                  placeholder="Select class"
+                >
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl>
+                <FormLabel color="gray.300">Species</FormLabel>
+                <Select
+                  value={editSpeciesId}
+                  onChange={(e) => setEditSpeciesId(e.target.value)}
+                  bg="#2a2a2a"
+                  borderColor="gray.600"
+                  color="white"
+                  placeholder="Select species"
+                >
+                  {species.map((sp) => (
+                    <option key={sp.id} value={sp.id}>
+                      {sp.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter borderTop="1px" borderColor="gray.700">
+            <Button variant="ghost" colorScheme="gray" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="green"
+              onClick={handleSaveCharacter}
+              isLoading={editLoading}
+              loadingText="Saving"
+            >
+              Save
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

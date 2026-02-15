@@ -44,8 +44,9 @@ const Login: React.FC = () => {
     // Direct to GitHub OAuth so the user never hits the backend URL (avoids "dangerous site" / stuck on Heroku)
     if (clientId && clientId.trim()) {
       const backendUrl = getBackendUrl();
-      const redirectUri = `${backendUrl}/api/auth/web/callback`;
-      const returnUrl = typeof window !== 'undefined' ? `${window.location.origin}/web/auth/callback` : '';
+      // redirect_uri must be the backend callback URL where GitHub sends the user after auth
+      const redirectUri = `${backendUrl}/api/auth/web/github/callback`;
+      const returnUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
       const state = btoa(JSON.stringify({ r: returnUrl, n: Math.random().toString(36).slice(2) }));
       const params = new URLSearchParams({
         client_id: clientId.trim(),
@@ -81,7 +82,7 @@ const Login: React.FC = () => {
             <CardBody>
               <VStack spacing={6}>
                 {errorMessage && (
-                  <Alert status="error" bg="#2d1b1b" borderColor="red.500" borderRadius="md">
+                  <Alert status="error" color="white"bg="#2d1b1b" borderColor="red.500" borderRadius="md">
                     <AlertIcon />
                     <Box>
                       <AlertTitle>Sign-in failed</AlertTitle>

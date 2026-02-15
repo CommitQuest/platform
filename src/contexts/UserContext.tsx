@@ -67,6 +67,7 @@ interface UserContextType {
   error: string | null;
   refreshUser: () => Promise<void>;
   clearUser: () => void;
+  refreshBackground: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -128,8 +129,27 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
+  const fetchBackground = async () => {
+    try {
+      if (!isLoggedIn()) {
+        setBackground(null);
+        return;
+      }
+
+      const response = await assetsAPI.getActiveBackground();
+      setBackground(response.background);
+    } catch (err) {
+      console.error('Error in fetchBackground:', err);
+      setBackground(null);
+    }
+  };
+
   const refreshUser = async () => {
     await fetchUserData();
+  };
+
+  const refreshBackground = async () => {
+    await fetchBackground();
   };
 
   const clearUser = () => {
@@ -149,6 +169,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     error,
     refreshUser,
     clearUser,
+    refreshBackground,
   };
 
   return (
