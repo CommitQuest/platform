@@ -54,6 +54,7 @@ interface UserData {
   totalCommits: number;
   streakCount: number;
   experienceGained: number;
+  gold: number;
   level: number;
   character: Character | null;
   achievements: Achievement[];

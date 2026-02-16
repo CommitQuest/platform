@@ -233,7 +233,7 @@ const Dashboard: React.FC = () => {
                 </VStack>
                 <Stat>
                   <StatLabel color="gray.300">Gold</StatLabel>
-                  <StatNumber color="yellow.400">{character.gold || 0}</StatNumber>
+                  <StatNumber color="yellow.400">{user.gold || 0}</StatNumber>
                 </Stat>
               </VStack>
             </CardBody>
