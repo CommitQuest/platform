@@ -8,7 +8,6 @@ interface Character {
   level: number;
   xp: number;
   xpToNext: number;
-  gold: number;
   avatar_url?: string;
   classes?: {
     id: number;

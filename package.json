@@ -26,8 +26,11 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "dev": "REACT_APP_USE_LOCAL_BACKEND=true react-scripts start",
+    "dev": "npm run dev:local",
+    "dev:local": "REACT_APP_USE_LOCAL_BACKEND=true react-scripts start",
+    "dev:prod": "REACT_APP_API_URL=https://commit-quest-app-3914e1ae3b5a.herokuapp.com react-scripts start",
     "build": "react-scripts build",
+    "build:prod": "REACT_APP_API_URL=https://commit-quest-app-3914e1ae3b5a.herokuapp.com react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

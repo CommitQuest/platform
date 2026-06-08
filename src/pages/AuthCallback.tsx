@@ -49,14 +49,14 @@ const AuthCallback: React.FC = () => {
 
   if (status === 'loading') {
     return (
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="#121212">
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="commitQuest.background">
         <Container maxW="md">
           <VStack spacing={6}>
             <Spinner size="xl" color="green.400" />
             <Heading size="lg" color="green.400">
               Completing Login...
             </Heading>
-            <Text color="gray.300" textAlign="center">
+            <Text color="green.400" textAlign="center">
               Please wait while we complete your authentication.
             </Text>
           </VStack>
@@ -67,7 +67,7 @@ const AuthCallback: React.FC = () => {
 
   if (status === 'error') {
     return (
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="#121212">
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="commitQuest.background">
         <Container maxW="md">
           <VStack spacing={6}>
             <Alert status="error" bg="#2d1b1b" borderColor="red.500">
@@ -97,10 +97,10 @@ const AuthCallback: React.FC = () => {
   }
 
   return (
-    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="#121212">
+    <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg="commitQuest.background">
       <Container maxW="md">
         <VStack spacing={6}>
-          <Alert status="success" bg="#1a2a2a" borderColor="green.500">
+          <Alert status="success" bg="commitQuest.panel" borderColor="green.500">
             <AlertIcon />
             <Box>
               <AlertTitle>Login Successful!</AlertTitle>

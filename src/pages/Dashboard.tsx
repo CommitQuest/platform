@@ -54,8 +54,8 @@ interface SpeciesOption {
 const Dashboard: React.FC = () => {
   const { user, background, loading, error, refreshUser } = useUser();
   const navigate = useNavigate();
-  const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editName, setEditName] = useState('');
@@ -116,7 +116,7 @@ const Dashboard: React.FC = () => {
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
         <VStack spacing={4}>
           <Spinner size="xl" color="green.400" />
-          <Text color="gray.300">Loading your character data...</Text>
+          <Text color="green.400">Loading your character data...</Text>
         </VStack>
       </Box>
     );
@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
   if (!user) {
     return (
       <Box>
-        <Alert status="info" mb={4} bg="#1a2a2a" borderColor="green.500">
+        <Alert status="info" mb={4} bg="commitQuest.panel" borderColor="green.500">
           <AlertIcon />
           <Text>Please log in to view your character dashboard.</Text>
         </Alert>
@@ -197,12 +197,12 @@ const Dashboard: React.FC = () => {
           </Box>
 
           {/* Character Card */}
-          <Card bg={cardBg} border="1px" borderColor={borderColor} flex="1">
+          <Card bg={cardBg} border="2px" borderColor={borderColor} flex="1">
             <CardBody>
               <VStack align="start" spacing={4}>
                 <HStack justify="space-between" w="full">
                   <HStack>
-                    <Heading size="lg" color="white">{character.name}</Heading>
+                    <Heading size="lg" color="green.400">{character.name}</Heading>
                     <Badge colorScheme="green" fontSize="md">
                       Level {user.level}
                     </Badge>
@@ -216,11 +216,11 @@ const Dashboard: React.FC = () => {
                     View Inventory
                   </Button>
                 </HStack>
-                <Text color="gray.300">
+                <Text color="green.400">
                   {character.species?.name || 'Unknown'} {character.classes?.name || 'Unknown'}
                 </Text>
                 <VStack align="start" spacing={1} w="full">
-                  <Text fontSize="sm" color="gray.400">
+                  <Text fontSize="sm" color="green.400">
                     Experience: {currentXP} / {xpNeeded}
                   </Text>
                   <Progress 
@@ -228,11 +228,11 @@ const Dashboard: React.FC = () => {
                     colorScheme="green" 
                     size="sm" 
                     w="full"
-                    bg="gray.700"
+                    bg="commitQuest.surface"
                   />
                 </VStack>
                 <Stat>
-                  <StatLabel color="gray.300">Gold</StatLabel>
+                  <StatLabel color="green.400">Gold</StatLabel>
                   <StatNumber color="yellow.400">{user.gold || 0}</StatNumber>
                 </Stat>
               </VStack>
@@ -243,48 +243,48 @@ const Dashboard: React.FC = () => {
         {/* Stats Grid */}
         <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={6}>
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <Stat>
-                  <StatLabel color="gray.300">Total Commits</StatLabel>
-                  <StatNumber color="white">{user.totalCommits}</StatNumber>
-                  <StatHelpText color="gray.400">All time</StatHelpText>
+                  <StatLabel color="green.400">Total Commits</StatLabel>
+                  <StatNumber color="green.400">{user.totalCommits}</StatNumber>
+                  <StatHelpText color="green.400">All time</StatHelpText>
                 </Stat>
               </CardBody>
             </Card>
           </GridItem>
           
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <Stat>
-                  <StatLabel color="gray.300">Current Streak</StatLabel>
+                  <StatLabel color="green.400">Current Streak</StatLabel>
                   <StatNumber color="green.400">{user.streakCount}</StatNumber>
-                  <StatHelpText color="gray.400">Days</StatHelpText>
+                  <StatHelpText color="green.400">Days</StatHelpText>
                 </Stat>
               </CardBody>
             </Card>
           </GridItem>
           
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <Stat>
-                  <StatLabel color="gray.300">Experience Gained</StatLabel>
-                  <StatNumber color="blue.400">{user.experienceGained}</StatNumber>
-                  <StatHelpText color="gray.400">Total XP</StatHelpText>
+                  <StatLabel color="green.400">Experience Gained</StatLabel>
+                  <StatNumber color="green.400">{user.experienceGained}</StatNumber>
+                  <StatHelpText color="green.400">Total XP</StatHelpText>
                 </Stat>
               </CardBody>
             </Card>
           </GridItem>
           
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <Stat>
-                  <StatLabel color="gray.300">Achievements</StatLabel>
-                  <StatNumber color="white">{user.achievements.length}</StatNumber>
-                  <StatHelpText color="gray.400">Earned</StatHelpText>
+                  <StatLabel color="green.400">Achievements</StatLabel>
+                  <StatNumber color="green.400">{user.achievements.length}</StatNumber>
+                  <StatHelpText color="green.400">Earned</StatHelpText>
                 </Stat>
               </CardBody>
             </Card>
@@ -294,20 +294,20 @@ const Dashboard: React.FC = () => {
         {/* Recent Activity and Achievements */}
         <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <VStack align="start" spacing={4}>
-                  <Heading size="md" color="white">Achievements</Heading>
+                  <Heading size="md" color="green.400">Achievements</Heading>
                   <VStack align="start" spacing={3} w="full" maxH="250px" overflowY="auto">
                     {user.achievements.map((achievement) => (
-                      <Box key={achievement.id} w="full" p={3} bg="#2a2a2a" borderRadius="md" border="1px" borderColor="green.500">
+                      <Box key={achievement.id} w="full" p={3} bg="commitQuest.surface" borderRadius="md" border="2px" borderColor="green.500">
                         <Text fontWeight="bold" color="green.400">{achievement.name}</Text>
-                        <Text fontSize="sm" color="gray.300">{achievement.description}</Text>
-                        <Text fontSize="xs" color="gray.400">{achievement.type}</Text>
+                        <Text fontSize="sm" color="green.400">{achievement.description}</Text>
+                        <Text fontSize="xs" color="green.400">{achievement.type}</Text>
                       </Box>
                     ))}
                     {user.achievements.length === 0 && (
-                      <Text color="gray.400" fontSize="sm">No achievements earned yet. Keep coding to earn your first achievement!</Text>
+                      <Text color="green.400" fontSize="sm">No achievements earned yet. Keep coding to earn your first achievement!</Text>
                     )}
                   </VStack>
                 </VStack>
@@ -316,20 +316,20 @@ const Dashboard: React.FC = () => {
           </GridItem>
           
           <GridItem>
-            <Card bg={cardBg} border="1px" borderColor={borderColor}>
+            <Card bg={cardBg} border="2px" borderColor={borderColor}>
               <CardBody>
                 <VStack align="start" spacing={4}>
-                  <Heading size="md" color="white">Character Info</Heading>
+                  <Heading size="md" color="green.400">Character Info</Heading>
                   <VStack align="start" spacing={3} w="full">
-                    <Box w="full" p={3} bg="#2a2a2a" borderRadius="md" border="1px" borderColor="gray.600">
-                      <Text fontWeight="bold" color="white">Class</Text>
-                      <Text fontSize="sm" color="gray.300">{character.classes?.name || 'Unknown'}</Text>
-                      <Text fontSize="xs" color="gray.400">{character.classes?.description || ''}</Text>
+                    <Box w="full" p={3} bg="commitQuest.surface" borderRadius="md" border="2px" borderColor="green.400">
+                      <Text fontWeight="bold" color="green.400">Class</Text>
+                      <Text fontSize="sm" color="green.400">{character.classes?.name || 'Unknown'}</Text>
+                      <Text fontSize="xs" color="green.400">{character.classes?.description || ''}</Text>
                     </Box>
-                    <Box w="full" p={3} bg="#2a2a2a" borderRadius="md" border="1px" borderColor="gray.600">
-                      <Text fontWeight="bold" color="white">Species</Text>
-                      <Text fontSize="sm" color="gray.300">{character.species?.name || 'Unknown'}</Text>
-                      <Text fontSize="xs" color="gray.400">{character.species?.description || ''}</Text>
+                    <Box w="full" p={3} bg="commitQuest.surface" borderRadius="md" border="2px" borderColor="green.400">
+                      <Text fontWeight="bold" color="green.400">Species</Text>
+                      <Text fontSize="sm" color="green.400">{character.species?.name || 'Unknown'}</Text>
+                      <Text fontSize="xs" color="green.400">{character.species?.description || ''}</Text>
                     </Box>
                     <Button
                       w="full"
@@ -349,9 +349,9 @@ const Dashboard: React.FC = () => {
 
       <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
         <ModalOverlay bg="blackAlpha.700" />
-        <ModalContent bg={cardBg} border="1px" borderColor={borderColor}>
-          <ModalHeader color="white">Edit Character</ModalHeader>
-          <ModalCloseButton color="gray.400" />
+        <ModalContent bg={cardBg} border="2px" borderColor={borderColor}>
+          <ModalHeader color="green.400">Edit Character</ModalHeader>
+          <ModalCloseButton color="green.400" />
           <ModalBody>
             <VStack spacing={4}>
               {editError && (
@@ -361,25 +361,25 @@ const Dashboard: React.FC = () => {
                 </Alert>
               )}
               <FormControl>
-                <FormLabel color="gray.300">Character name</FormLabel>
+                <FormLabel color="green.400">Character name</FormLabel>
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Character name"
-                  bg="#2a2a2a"
-                  borderColor="gray.600"
-                  color="white"
-                  _placeholder={{ color: 'gray.500' }}
+                  bg="commitQuest.surface"
+                  borderColor="green.400"
+                  color="green.400"
+                  _placeholder={{ color: 'green.700' }}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel color="gray.300">Class</FormLabel>
+                <FormLabel color="green.400">Class</FormLabel>
                 <Select
                   value={editClassId}
                   onChange={(e) => setEditClassId(e.target.value)}
-                  bg="#2a2a2a"
-                  borderColor="gray.600"
-                  color="white"
+                  bg="commitQuest.surface"
+                  borderColor="green.400"
+                  color="green.400"
                   placeholder="Select class"
                 >
                   {classes.map((cls) => (
@@ -390,13 +390,13 @@ const Dashboard: React.FC = () => {
                 </Select>
               </FormControl>
               <FormControl>
-                <FormLabel color="gray.300">Species</FormLabel>
+                <FormLabel color="green.400">Species</FormLabel>
                 <Select
                   value={editSpeciesId}
                   onChange={(e) => setEditSpeciesId(e.target.value)}
-                  bg="#2a2a2a"
-                  borderColor="gray.600"
-                  color="white"
+                  bg="commitQuest.surface"
+                  borderColor="green.400"
+                  color="green.400"
                   placeholder="Select species"
                 >
                   {species.map((sp) => (
@@ -408,7 +408,7 @@ const Dashboard: React.FC = () => {
               </FormControl>
             </VStack>
           </ModalBody>
-          <ModalFooter borderTop="1px" borderColor="gray.700">
+          <ModalFooter borderTop="1px" borderColor="green.400">
             <Button variant="ghost" colorScheme="gray" mr={3} onClick={onClose}>
               Cancel
             </Button>

@@ -16,7 +16,6 @@ export interface Character {
   level: number;
   xp: number;
   xp_to_next: number;
-  gold: number;
   species: string;
   class: string;
   stats: Record<string, any>;

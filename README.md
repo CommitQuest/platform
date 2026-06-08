@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# CommitQuest Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React web platform for CommitQuest.
 
 ## Available Scripts
 
@@ -13,6 +13,26 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.\
 You will also see any lint errors in the console.
+
+### `npm run dev:local`
+
+Runs the app against the local backend at `http://localhost:3001`.
+
+### `npm run dev:prod`
+
+Runs the app locally while using the production backend at
+`https://commit-quest-app-3914e1ae3b5a.herokuapp.com`.
+
+You can check that backend directly with:
+
+```bash
+curl https://commit-quest-app-3914e1ae3b5a.herokuapp.com
+```
+
+### `npm run build:prod`
+
+Builds the app with `REACT_APP_API_URL` set to the production backend:
+`https://commit-quest-app-3914e1ae3b5a.herokuapp.com`.
 
 ### `npm test`
 

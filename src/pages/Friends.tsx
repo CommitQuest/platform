@@ -88,8 +88,8 @@ const getSearchResults = (data: any): User[] =>
 
 const Friends: React.FC = () => {
   const { user: currentUserData, loading: userLoading } = useUser();
-  const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   const [friends, setFriends] = useState<Friendship[]>([]);
   const [mutualFriends, setMutualFriends] = useState<Friendship[]>([]);
@@ -247,7 +247,7 @@ const Friends: React.FC = () => {
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
         <VStack spacing={4}>
           <Spinner size="xl" color="green.400" />
-          <Text color="gray.300">Loading...</Text>
+          <Text color="green.400">Loading...</Text>
         </VStack>
       </Box>
     );
@@ -256,7 +256,7 @@ const Friends: React.FC = () => {
   return (
     <Box>
       <VStack spacing={6} align="stretch">
-        <Heading size="lg" color="white">
+        <Heading size="lg" color="green.400">
           Friends
         </Heading>
         {error && (
@@ -269,10 +269,10 @@ const Friends: React.FC = () => {
 
         <Tabs variant="enclosed" colorScheme="green">
           <TabList borderColor={borderColor}>
-            <Tab color="gray.300">My Friends</Tab>
-            <Tab color="gray.300">GitHub on CommitQuest</Tab>
-            <Tab color="gray.300">Search</Tab>
-            <Tab color="gray.300">Weekly Leaderboard</Tab>
+            <Tab color="green.400">My Friends</Tab>
+            <Tab color="green.400">GitHub on CommitQuest</Tab>
+            <Tab color="green.400">Search</Tab>
+            <Tab color="green.400">Weekly Leaderboard</Tab>
           </TabList>
           <TabPanels>
             {/* My Friends */}
@@ -283,19 +283,19 @@ const Friends: React.FC = () => {
                 ) : (
                   <>
                     {requestsReceived.length > 0 && (
-                      <Card bg={cardBg} border="1px" borderColor={borderColor}>
+                      <Card bg={cardBg} border="2px" borderColor={borderColor}>
                         <CardHeader>
-                          <Heading size="sm" color="white">
+                          <Heading size="sm" color="green.400">
                             Pending requests
                           </Heading>
                         </CardHeader>
                         <CardBody pt={0}>
                           <VStack align="stretch" spacing={2}>
                             {requestsReceived.map((req) => (
-                              <HStack key={req.id} justify="space-between" p={2} bg="#2a2a2a" borderRadius="md">
+                              <HStack key={req.id} justify="space-between" p={2} bg="commitQuest.surface" borderRadius="md">
                                 <HStack>
                                   <Avatar size="sm" src={req.sender?.avatar_url} name={req.sender?.github_username} />
-                                  <Text color="white">{req.sender?.github_username}</Text>
+                                  <Text color="green.400">{req.sender?.github_username}</Text>
                                 </HStack>
                                 <HStack>
                                   <Button
@@ -321,25 +321,25 @@ const Friends: React.FC = () => {
                         </CardBody>
                       </Card>
                     )}
-                    <Card bg={cardBg} border="1px" borderColor={borderColor}>
+                    <Card bg={cardBg} border="2px" borderColor={borderColor}>
                       <CardHeader>
-                        <Heading size="sm" color="white">
+                        <Heading size="sm" color="green.400">
                           Friends {friends.length > 0 && `(${friends.length})`}
                         </Heading>
                       </CardHeader>
                       <CardBody pt={0}>
                         {friends.length === 0 ? (
-                          <Text color="gray.400">No friends yet. Search for users to add friends.</Text>
+                          <Text color="green.400">No friends yet. Search for users to add friends.</Text>
                         ) : (
                           <Wrap spacing={3}>
                             {friends.map((f) => (
                               <WrapItem key={f.id}>
-                                <Card size="sm" bg="#2a2a2a" border="1px" borderColor={borderColor}>
+                                <Card size="sm" bg="commitQuest.surface" border="2px" borderColor={borderColor}>
                                   <CardBody py={3} px={4}>
                                     <HStack spacing={3}>
                                       <Avatar size="md" src={f.friend?.avatar_url} name={f.friend?.github_username} />
                                       <VStack align="start" spacing={0}>
-                                        <Text color="white" fontWeight="medium">
+                                        <Text color="green.400" fontWeight="medium">
                                           {f.friend?.github_username}
                                         </Text>
                                         {typeof f.mutual_count === 'number' && f.mutual_count > 0 && (
@@ -367,12 +367,12 @@ const Friends: React.FC = () => {
                       </CardBody>
                     </Card>
                     {mutualFriends.length > 0 && (
-                      <Card bg={cardBg} border="1px" borderColor={borderColor}>
+                      <Card bg={cardBg} border="2px" borderColor={borderColor}>
                         <CardHeader>
-                          <Heading size="sm" color="white">
+                          <Heading size="sm" color="green.400">
                             Mutual friends
                           </Heading>
-                          <Text fontSize="sm" color="gray.400">
+                          <Text fontSize="sm" color="green.400">
                             Friends you have in common
                           </Text>
                         </CardHeader>
@@ -380,9 +380,9 @@ const Friends: React.FC = () => {
                           <Wrap spacing={3}>
                             {mutualFriends.map((f) => (
                               <WrapItem key={f.id}>
-                                <HStack p={2} bg="#2a2a2a" borderRadius="md">
+                                <HStack p={2} bg="commitQuest.surface" borderRadius="md">
                                   <Avatar size="sm" src={f.friend?.avatar_url} name={f.friend?.github_username} />
-                                  <Text color="white">{f.friend?.github_username}</Text>
+                                  <Text color="green.400">{f.friend?.github_username}</Text>
                                 </HStack>
                               </WrapItem>
                             ))}
@@ -397,13 +397,13 @@ const Friends: React.FC = () => {
 
             {/* GitHub connections */}
             <TabPanel>
-              <Card bg={cardBg} border="1px" borderColor={borderColor}>
+              <Card bg={cardBg} border="2px" borderColor={borderColor}>
                 <CardBody>
                   <VStack align="stretch" spacing={4}>
-                    <Heading size="sm" color="white">
+                    <Heading size="sm" color="green.400">
                       GitHub followers & following on CommitQuest
                     </Heading>
-                    <Text color="gray.400" fontSize="sm">
+                    <Text color="green.400" fontSize="sm">
                       People you follow or who follow you on GitHub and also use CommitQuest. The backend uses your
                       GitHub token to fetch followers/following and matches them with CommitQuest users.
                     </Text>
@@ -413,12 +413,12 @@ const Friends: React.FC = () => {
                       <Wrap spacing={3}>
                         {githubConnections.map((c) => (
                           <WrapItem key={c.user.id}>
-                            <Card size="sm" bg="#2a2a2a" border="1px" borderColor={borderColor}>
+                            <Card size="sm" bg="commitQuest.surface" border="2px" borderColor={borderColor}>
                               <CardBody py={2} px={3}>
                                 <HStack spacing={2}>
                                   <Avatar size="sm" src={c.user.avatar_url} name={c.user.github_username} />
                                   <VStack align="start" spacing={0}>
-                                    <Text color="white" fontSize="sm">
+                                    <Text color="green.400" fontSize="sm">
                                       {c.user.github_username}
                                     </Text>
                                     <Badge size="sm" colorScheme="blue">
@@ -442,10 +442,10 @@ const Friends: React.FC = () => {
                         ))}
                       </Wrap>
                     ) : (
-                      <Alert status="info" bg="#1a2a2a" borderColor="green.500">
+                      <Alert status="info" bg="commitQuest.panel" borderColor="green.500">
                         <AlertIcon />
                         <Box>
-                          <AlertTitle color="white">No GitHub connections on CommitQuest</AlertTitle>
+                          <AlertTitle color="green.400">No GitHub connections on CommitQuest</AlertTitle>
                         </Box>
                       </Alert>
                     )}
@@ -456,22 +456,22 @@ const Friends: React.FC = () => {
 
             {/* Search */}
             <TabPanel>
-              <Card bg={cardBg} border="1px" borderColor={borderColor}>
+              <Card bg={cardBg} border="2px" borderColor={borderColor}>
                 <CardBody>
                   <VStack align="stretch" spacing={4}>
                     <InputGroup>
                       <InputLeftElement pointerEvents="none">
-                        <Search2Icon color="gray.400" />
+                        <Search2Icon color="green.400" />
                       </InputLeftElement>
                       <Input
                         placeholder="Search by username..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        bg="#2a2a2a"
+                        bg="commitQuest.surface"
                         borderColor={borderColor}
-                        color="white"
-                        _placeholder={{ color: 'gray.500' }}
+                        color="green.400"
+                        _placeholder={{ color: 'green.700' }}
                       />
                     </InputGroup>
                     <Button colorScheme="green" onClick={handleSearch} isLoading={searching}>
@@ -480,10 +480,10 @@ const Friends: React.FC = () => {
                     {searchResults.length > 0 && (
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                         {searchResults.map((u) => (
-                          <HStack key={u.id} p={3} bg="#2a2a2a" borderRadius="md" justify="space-between">
+                          <HStack key={u.id} p={3} bg="commitQuest.surface" borderRadius="md" justify="space-between">
                             <HStack>
                               <Avatar size="sm" src={u.avatar_url} name={u.github_username} />
-                              <Text color="white">{u.github_username}</Text>
+                              <Text color="green.400">{u.github_username}</Text>
                             </HStack>
                             {u.id !== (currentUserData as any)?.id && (
                               <>
@@ -508,7 +508,7 @@ const Friends: React.FC = () => {
                       </SimpleGrid>
                     )}
                     {searchQuery.trim() && !searching && searchResults.length === 0 && (
-                      <Text color="gray.400">No users found.</Text>
+                      <Text color="green.400">No users found.</Text>
                     )}
                   </VStack>
                 </CardBody>
@@ -517,12 +517,12 @@ const Friends: React.FC = () => {
 
             {/* Weekly leaderboard */}
             <TabPanel>
-              <Card bg={cardBg} border="1px" borderColor={borderColor}>
+              <Card bg={cardBg} border="2px" borderColor={borderColor}>
                 <CardHeader>
-                  <Heading size="sm" color="white">
+                  <Heading size="sm" color="green.400">
                     Most XP gained this week
                   </Heading>
-                  <Text fontSize="sm" color="gray.400">
+                  <Text fontSize="sm" color="green.400">
                     Top experience gainers in the last 7 days
                   </Text>
                 </CardHeader>
@@ -530,16 +530,16 @@ const Friends: React.FC = () => {
                   {loading ? (
                     <Spinner color="green.400" />
                   ) : leaderboard.length === 0 ? (
-                    <Text color="gray.400">
+                    <Text color="green.400">
                       No leaderboard data yet.
                     </Text>
                   ) : (
                     <Table size="sm" variant="simple">
                       <Thead>
                         <Tr>
-                          <Th color="gray.400">Rank</Th>
-                          <Th color="gray.400">User</Th>
-                          <Th color="gray.400" isNumeric>
+                          <Th color="green.400">Rank</Th>
+                          <Th color="green.400">User</Th>
+                          <Th color="green.400" isNumeric>
                             XP (week)
                           </Th>
                         </Tr>
@@ -547,7 +547,7 @@ const Friends: React.FC = () => {
                       <Tbody>
                         {leaderboard.map((entry) => (
                           <Tr key={entry.user_id}>
-                            <Td color="white">#{entry.rank}</Td>
+                            <Td color="green.400">#{entry.rank}</Td>
                             <Td>
                               <HStack spacing={2}>
                                 <Avatar
@@ -556,11 +556,11 @@ const Friends: React.FC = () => {
                                   name={entry.character_name ?? entry.github_username}
                                 />
                                 <VStack align="start" spacing={0}>
-                                  <Text color="white" fontWeight="medium">
+                                  <Text color="green.400" fontWeight="medium">
                                     {entry.character_name || entry.github_username}
                                   </Text>
                                   {entry.character_name && (
-                                    <Text fontSize="xs" color="gray.500">
+                                    <Text fontSize="xs" color="green.700">
                                       @{entry.github_username}
                                     </Text>
                                   )}

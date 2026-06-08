@@ -24,6 +24,7 @@ const DEFAULT_SCOPE = 'read:user user:email';
 const ERROR_MESSAGES: Record<string, string> = {
   access_denied: 'You denied access to your GitHub account.',
   no_code: 'No authorization code received from GitHub.',
+  invalid_state: 'The GitHub sign-in state was invalid. Please try signing in again.',
   token_exchange_failed: 'Failed to exchange authorization code for token.',
   no_access_token: 'No access token received from GitHub.',
   database_error: 'Failed to save user data.',
@@ -31,11 +32,20 @@ const ERROR_MESSAGES: Record<string, string> = {
   callback_failed: 'OAuth callback processing failed.',
 };
 
+const createOAuthState = (): string => {
+  const bytes = new Uint8Array(16);
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+  return Math.random().toString(36).slice(2);
+};
+
 const Login: React.FC = () => {
   const [searchParams] = useSearchParams();
   const errorParam = searchParams.get('error');
-  const bgColor = useColorModeValue('#121212', '#121212');
-  const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
+  const bgColor = useColorModeValue('commitQuest.background', 'commitQuest.background');
+  const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
 
   const errorMessage = errorParam ? (ERROR_MESSAGES[errorParam] ?? `Authentication error: ${errorParam}`) : null;
 
@@ -46,8 +56,7 @@ const Login: React.FC = () => {
       const backendUrl = getBackendUrl();
       // redirect_uri must be the backend callback URL where GitHub sends the user after auth
       const redirectUri = `${backendUrl}/api/auth/web/github/callback`;
-      const returnUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '';
-      const state = btoa(JSON.stringify({ r: returnUrl, n: Math.random().toString(36).slice(2) }));
+      const state = createOAuthState();
       const params = new URLSearchParams({
         client_id: clientId.trim(),
         redirect_uri: redirectUri,
@@ -73,16 +82,16 @@ const Login: React.FC = () => {
             <Heading size="xl" color="green.400">
               Welcome to CommitQuest
             </Heading>
-            <Text color="gray.300">
+            <Text color="green.400">
               Sign in with your GitHub account to start your coding adventure!
             </Text>
           </VStack>
 
-          <Card w="full" bg={cardBg} border="1px" borderColor="#333333">
+          <Card w="full" bg={cardBg} border="2px" borderColor="green.400">
             <CardBody>
               <VStack spacing={6}>
                 {errorMessage && (
-                  <Alert status="error" color="white"bg="#2d1b1b" borderColor="red.500" borderRadius="md">
+                  <Alert status="error" color="green.400" bg="#2d1b1b" borderColor="red.500" borderRadius="md">
                     <AlertIcon />
                     <Box>
                       <AlertTitle>Sign-in failed</AlertTitle>
@@ -100,14 +109,14 @@ const Login: React.FC = () => {
                   Continue with GitHub
                 </Button>
                 
-                <Text fontSize="sm" color="gray.400" textAlign="center">
+                <Text fontSize="sm" color="green.400" textAlign="center">
                   By signing in, you agree to our Terms of Service and Privacy Policy.
                 </Text>
               </VStack>
             </CardBody>
           </Card>
 
-          <Text fontSize="sm" color="gray.400">
+          <Text fontSize="sm" color="green.400">
             Don't have an account? Your GitHub account will be created automatically.
           </Text>
         </VStack>

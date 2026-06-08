@@ -9,14 +9,14 @@ import {
 } from '@chakra-ui/react';
 
 const Footer: React.FC = () => {
-  const bgColor = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const bgColor = useColorModeValue('commitQuest.background', 'commitQuest.background');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   return (
     <Box
       as="footer"
       bg={bgColor}
-      borderTop="1px"
+      borderTop="2px"
       borderColor={borderColor}
       py={6}
       mt="auto"
@@ -25,8 +25,8 @@ const Footer: React.FC = () => {
     >
       <Container maxW="container.xl">
         <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
-          <Text fontSize="sm" color="gray.400">
-            © 2026 CommitQuest. Thank you to Adam and everyone else along the way!
+          <Text fontSize="sm" color="green.400">
+            © 2026 CommitQuest. Thank you to everyone along the way!
           </Text>
           
           <Flex gap={6} fontSize="sm">

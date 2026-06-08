@@ -8,12 +8,14 @@ import Dashboard from './pages/Dashboard';
 import Character from './pages/Character';
 import Friends from './pages/Friends';
 import Shop from './pages/Shop';
+import Downloads from './pages/Downloads';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
+import theme from './theme';
 
 function App() {
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <UserProvider>
         <Router>
           <Box minH="100vh">
@@ -40,6 +42,11 @@ function App() {
               <Route path="/shop" element={
                 <Layout>
                   <Shop />
+                </Layout>
+              } />
+              <Route path="/downloads" element={
+                <Layout>
+                  <Downloads />
                 </Layout>
               } />
             </Routes>

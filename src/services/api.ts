@@ -1,6 +1,8 @@
 // API service for communicating with the backend
 
-// Use local backend when running on localhost (local dev)
+// Use named npm scripts to choose a backend:
+// - npm run dev:local -> http://localhost:3001
+// - npm run dev:prod / npm run build:prod -> Heroku production backend
 // Normalize: no trailing slash, no surrounding quotes (from .env)
 function normalizeBaseUrl(url: string | undefined): string {
   if (!url || typeof url !== 'string') return '';
@@ -11,8 +13,8 @@ function normalizeBaseUrl(url: string | undefined): string {
 const DEFAULT_API_URL = 'https://commit-quest-app-3914e1ae3b5a.herokuapp.com';
 const LOCAL_BACKEND_URL = 'http://localhost:3001';
 
-// Use REACT_APP_API_URL when set (so localhost can point at Heroku); else localhost → local backend.
-// REACT_APP_USE_LOCAL_BACKEND=true (set by `npm run dev`) forces local backend and overrides .env.
+// Use REACT_APP_API_URL when set (so localhost can point at Heroku); else localhost -> local backend.
+// REACT_APP_USE_LOCAL_BACKEND=true (set by `npm run dev:local`) forces local backend and overrides .env.
 function getApiBaseUrl(): string {
   if (process.env.REACT_APP_USE_LOCAL_BACKEND === 'true') {
     return LOCAL_BACKEND_URL;

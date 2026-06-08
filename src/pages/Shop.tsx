@@ -22,8 +22,8 @@ const float = keyframes`
 
 
 const Shop: React.FC = () => {
-  const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   return (
     <Box position="relative" minH="60vh" py={12}>
@@ -96,10 +96,10 @@ const Shop: React.FC = () => {
         </Box>
 
         <VStack spacing={2}>
-          <Heading size="2xl" color="white" letterSpacing="wide">
+          <Heading size="2xl" color="green.400" letterSpacing="wide">
             Shop coming soon!
           </Heading>
-          <Text color="gray.400" fontSize="lg">
+          <Text color="green.400" fontSize="lg">
             We&apos;re stocking up on gear, items, and more.
           </Text>
         </VStack>
@@ -116,10 +116,10 @@ const Shop: React.FC = () => {
             _hover={{ borderColor: 'green.500', color: 'green.400' }}
             transition="all 0.2s"
           >
-            <Box mb={2} color="gray.500" _hover={{ color: 'green.400' }}>
+            <Box mb={2} color="green.700" _hover={{ color: 'green.400' }}>
               <PackageIcon size={32} />
             </Box>
-            <Text fontSize="xs" color="gray.500">Items</Text>
+            <Text fontSize="xs" color="green.700">Items</Text>
           </Box>
           <Box
             p={4}
@@ -131,10 +131,10 @@ const Shop: React.FC = () => {
             _hover={{ borderColor: 'green.500', color: 'green.400' }}
             transition="all 0.2s"
           >
-            <Box mb={2} color="gray.500" _hover={{ color: 'green.400' }}>
+            <Box mb={2} color="green.700" _hover={{ color: 'green.400' }}>
               <TagIcon size={32} />
             </Box>
-            <Text fontSize="xs" color="gray.500">Deals</Text>
+            <Text fontSize="xs" color="green.700">Deals</Text>
           </Box>
           <Box
             p={4}
@@ -146,10 +146,10 @@ const Shop: React.FC = () => {
             _hover={{ borderColor: 'green.500', color: 'green.400' }}
             transition="all 0.2s"
           >
-            <Box mb={2} color="gray.500" _hover={{ color: 'green.400' }}>
+            <Box mb={2} color="green.700" _hover={{ color: 'green.400' }}>
               <ShopIcon size={32} />
             </Box>
-            <Text fontSize="xs" color="gray.500">Shop</Text>
+            <Text fontSize="xs" color="green.700">Shop</Text>
           </Box>
         </SimpleGrid>
       </VStack>

@@ -49,8 +49,8 @@ const Inventory: React.FC = () => {
   const [equippingId, setEquippingId] = useState<number | null>(null);
   const [, setInventoryError] = useState<string | null>(null);
   
-  const cardBg = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   const handleEquipBackground = async (backgroundId: number) => {
     try {
@@ -127,21 +127,21 @@ const Inventory: React.FC = () => {
 
   // Render inventory section
   const renderInventorySection = (title: string, items: UserInventory[], emptyMessage: string) => (
-    <Card bg={cardBg} border="1px" borderColor={borderColor}>
+    <Card bg={cardBg} border="2px" borderColor={borderColor}>
       <CardBody>
         <VStack align="start" spacing={4}>
-          <Heading size="md" color="white">{title}</Heading>
+          <Heading size="md" color="green.400">{title}</Heading>
           
           {inventoryLoading ? (
             <Box display="flex" justifyContent="center" w="full" py={4}>
               <VStack spacing={2}>
                 <Spinner size="md" color="green.400" />
-                <Text color="gray.300" fontSize="sm">Loading...</Text>
+                <Text color="green.400" fontSize="sm">Loading...</Text>
               </VStack>
             </Box>
           ) : items.length === 0 ? (
             <Box textAlign="center" w="full" py={4}>
-              <Text color="gray.400" fontSize="sm">
+              <Text color="green.400" fontSize="sm">
                 {emptyMessage}
               </Text>
             </Box>
@@ -153,7 +153,7 @@ const Inventory: React.FC = () => {
                 return (
                   <Card 
                     key={inventoryItem.id} 
-                    bg="#2a2a2a" 
+                    bg="commitQuest.surface" 
                     border="1px" 
                     borderColor={itemColor + '.500'}
                     _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
@@ -176,7 +176,7 @@ const Inventory: React.FC = () => {
                         
                         <VStack spacing={1} textAlign="center">
                           <Tooltip label={item.description} placement="top">
-                            <Text fontWeight="bold" color="white" fontSize="xs" noOfLines={1}>
+                            <Text fontWeight="bold" color="green.400" fontSize="xs" noOfLines={1}>
                               {item.name}
                             </Text>
                           </Tooltip>
@@ -209,7 +209,7 @@ const Inventory: React.FC = () => {
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
         <VStack spacing={4}>
           <Spinner size="xl" color="green.400" />
-          <Text color="gray.300">Loading your inventory...</Text>
+          <Text color="green.400">Loading your inventory...</Text>
         </VStack>
       </Box>
     );
@@ -231,7 +231,7 @@ const Inventory: React.FC = () => {
   if (!user) {
     return (
       <Box>
-        <Alert status="info" mb={4} bg="#1a2a2a" borderColor="green.500">
+        <Alert status="info" mb={4} bg="commitQuest.panel" borderColor="green.500">
           <AlertIcon />
           <Text>Please log in to view your inventory.</Text>
         </Alert>
@@ -260,7 +260,7 @@ const Inventory: React.FC = () => {
           {/* Small Character Avatar */}
           
           <Box
-            bg="#2a2a2a"
+            bg="commitQuest.surface"
             borderRadius="md"
             p={4}
             border="2px"
@@ -302,23 +302,23 @@ const Inventory: React.FC = () => {
           </Box>
 
           {/* Character Info */}
-          <Card bg={cardBg} border="1px" borderColor={borderColor} flex="1">
+          <Card bg={cardBg} border="2px" borderColor={borderColor} flex="1">
             <CardBody>
               <VStack align="start" spacing={3}>
                 <HStack>
-                  <Heading size="lg" color="white">{character.name}</Heading>
+                  <Heading size="lg" color="green.400">{character.name}</Heading>
                   <Badge colorScheme="green" fontSize="md">
                     Level {user.level}
                   </Badge>
                 </HStack>
                 
-                <Text color="gray.300">
+                <Text color="green.400">
                   {character.species?.name || 'Unknown'} {character.classes?.name || 'Unknown'}
                 </Text>
                 
                 <Stat>
-                  <StatLabel color="gray.300">Gold</StatLabel>
-                  <StatNumber color="yellow.400" fontSize="2xl">{character.gold || 0}</StatNumber>
+                  <StatLabel color="green.400">Gold</StatLabel>
+                  <StatNumber color="yellow.400" fontSize="2xl">{user.gold || 0}</StatNumber>
                 </Stat>
               </VStack>
             </CardBody>
@@ -326,21 +326,21 @@ const Inventory: React.FC = () => {
         </HStack>
 
         {/* Apparel Section */}
-        <Card bg={cardBg} border="1px" borderColor={borderColor}>
+        <Card bg={cardBg} border="2px" borderColor={borderColor}>
           <CardBody>
             <VStack align="start" spacing={4}>
-              <Heading size="md" color="white">Apparel</Heading>
+              <Heading size="md" color="green.400">Apparel</Heading>
               
               {inventoryLoading ? (
                 <Box display="flex" justifyContent="center" w="full" py={4}>
                   <VStack spacing={2}>
                     <Spinner size="md" color="green.400" />
-                    <Text color="gray.300" fontSize="sm">Loading...</Text>
+                    <Text color="green.400" fontSize="sm">Loading...</Text>
                   </VStack>
                 </Box>
               ) : apparel.length === 0 ? (
                 <Box textAlign="center" w="full" py={4}>
-                  <Text color="gray.400" fontSize="sm">
+                  <Text color="green.400" fontSize="sm">
                     No apparel items found. Visit the shop to buy some!
                   </Text>
                 </Box>
@@ -352,7 +352,7 @@ const Inventory: React.FC = () => {
                     return (
                       <Card 
                         key={inventoryItem.id} 
-                        bg="#2a2a2a" 
+                        bg="commitQuest.surface" 
                         border="1px" 
                         borderColor={itemColor + '.500'}
                         _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
@@ -375,7 +375,7 @@ const Inventory: React.FC = () => {
                             
                             <VStack spacing={1} textAlign="center">
                               <Tooltip label={item.description} placement="top">
-                                <Text fontWeight="bold" color="white" fontSize="xs" noOfLines={1}>
+                                <Text fontWeight="bold" color="green.400" fontSize="xs" noOfLines={1}>
                                   {item.name}
                                 </Text>
                               </Tooltip>
@@ -409,21 +409,21 @@ const Inventory: React.FC = () => {
         )}
 
         {/* Backgrounds Section */}
-        <Card bg={cardBg} border="1px" borderColor={borderColor}>
+        <Card bg={cardBg} border="2px" borderColor={borderColor}>
           <CardBody>
             <VStack align="start" spacing={4}>
-              <Heading size="md" color="white">Backgrounds</Heading>
+              <Heading size="md" color="green.400">Backgrounds</Heading>
               
               {backgroundsLoading ? (
                 <Box display="flex" justifyContent="center" w="full" py={4}>
                   <VStack spacing={2}>
                     <Spinner size="md" color="green.400" />
-                    <Text color="gray.300" fontSize="sm">Loading...</Text>
+                    <Text color="green.400" fontSize="sm">Loading...</Text>
                   </VStack>
                 </Box>
               ) : backgrounds.length === 0 ? (
                 <Box textAlign="center" w="full" py={4}>
-                  <Text color="gray.400" fontSize="sm">
+                  <Text color="green.400" fontSize="sm">
                     No backgrounds found. Visit the shop to buy some!
                   </Text>
                 </Box>
@@ -432,7 +432,7 @@ const Inventory: React.FC = () => {
                   {backgrounds.map((bg) => (
                     <Card
                       key={bg.inventory_id}
-                      bg="#2a2a2a"
+                      bg="commitQuest.surface"
                       border="2px"
                       borderColor={bg.equipped ? 'green.500' : borderColor}
                       _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}

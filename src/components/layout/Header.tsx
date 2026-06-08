@@ -19,8 +19,8 @@ import { useUser } from '../../contexts/UserContext';
 
 const Header: React.FC = () => {
   const { user, loading } = useUser();
-  const bgColor = useColorModeValue('#1e1e1e', '#1e1e1e');
-  const borderColor = useColorModeValue('#333333', '#333333');
+  const bgColor = useColorModeValue('commitQuest.background', 'commitQuest.background');
+  const borderColor = useColorModeValue('green.400', 'green.400');
 
   const handleLogout = async () => {
     try {
@@ -37,7 +37,7 @@ const Header: React.FC = () => {
     <Box
       as="header"
       bg={bgColor}
-      borderBottom="1px"
+      borderBottom="2px"
       borderColor={borderColor}
       px={4}
       py={4}
@@ -46,7 +46,7 @@ const Header: React.FC = () => {
       zIndex={11}
     >
       <Flex justify="space-between" align="center" maxW="container.xl" mx="auto">
-        <Heading size="lg" color="green.400" cursor="pointer" onClick={() => window.location.href = '/'}>
+        <Heading size="md" color="green.400" cursor="pointer" onClick={() => window.location.href = '/'}>
           CommitQuest
         </Heading>
         
@@ -54,7 +54,7 @@ const Header: React.FC = () => {
           <Button 
             colorScheme="green" 
             variant="ghost" 
-            _hover={{ bg: 'green.500', color: 'white' }}
+            _hover={{ bg: 'green.400', color: 'commitQuest.background' }}
             onClick={() => {}}
           >
             Support
@@ -72,8 +72,8 @@ const Header: React.FC = () => {
                     px={3}
                     border="2px solid"
                     borderColor="green.500"
-                    color="white"
-                    _hover={{ bg: 'green.500', color: 'white' }}
+                    color="green.400"
+                    _hover={{ bg: 'green.400', color: 'commitQuest.background' }}
                     _active={{ bg: 'green.600' }}
                   >
                     <Avatar 
@@ -90,11 +90,11 @@ const Header: React.FC = () => {
                       }}
                     />
                   </MenuButton>
-                  <MenuList bg="#2a2a2a" borderColor="#333333" boxShadow="lg">
-                    <MenuItem bg="#2a2a2a" color="white" _hover={{ bg: 'green.500' }}>Profile</MenuItem>
-                    {/* <MenuItem bg="#2a2a2a" color="white" _hover={{ bg: 'green.500' }}>Settings</MenuItem> */}
-                    <MenuDivider borderColor="#777777" />
-                    <MenuItem bg="#2a2a2a" onClick={handleLogout} color="white" _hover={{ bg: 'green.500' }}>Logout</MenuItem>
+                  <MenuList bg="commitQuest.panel" borderColor="green.400" boxShadow="0 0 16px rgba(0, 255, 65, 0.18)">
+                    <MenuItem bg="commitQuest.panel" color="green.400" _hover={{ bg: 'green.400', color: 'commitQuest.background' }}>Profile</MenuItem>
+                    {/* <MenuItem bg="commitQuest.panel" color="green.400" _hover={{ bg: 'green.400', color: 'commitQuest.background' }}>Settings</MenuItem> */}
+                    <MenuDivider borderColor="green.700" />
+                    <MenuItem bg="commitQuest.panel" onClick={handleLogout} color="green.400" _hover={{ bg: 'green.400', color: 'commitQuest.background' }}>Logout</MenuItem>
                   </MenuList>
                 </Menu>
               ) : (

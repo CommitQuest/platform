@@ -10,7 +10,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <Box minH="100vh" display="flex" flexDirection="column" bg="#121212">
+    <Box minH="100vh" display="flex" flexDirection="column" bg="commitQuest.background">
       <Header />
       <Navigation />
       <Box flex="1" py={8}>
