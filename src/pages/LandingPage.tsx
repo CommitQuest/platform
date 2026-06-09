@@ -198,7 +198,6 @@ const LandingPage: React.FC = () => {
           <div className="cq-nav-tabs">
             <a className="cq-nav-link" href="#xp">Mechanics</a>
             <a className="cq-nav-link" href="#cli">CLI</a>
-            <a className="cq-nav-link" href="/downloads">Download</a>
             <button className="cq-nav-link cq-nav-button" onClick={() => navigate('/login')}>Login</button>
           </div>
           <div className="cq-nav-socials">
