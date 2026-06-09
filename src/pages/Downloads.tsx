@@ -16,9 +16,8 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { FaRegCopy } from 'react-icons/fa';
+import { useLatestCliRelease } from '../hooks/useLatestCliRelease';
 
-const CLI_TARBALL_URL = 'https://github.com/CommitQuest/cli/releases/download/v0.1.2/commitquest-0.1.2.tgz';
-const CLI_INSTALL_COMMAND = `npm install -g ${CLI_TARBALL_URL}`;
 const CopyIcon = FaRegCopy as React.ComponentType<{ size?: number }>;
 
 const CodeBlock: React.FC<{ children: string }> = ({ children }) => (
@@ -44,9 +43,17 @@ const Downloads: React.FC = () => {
   const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
   const borderColor = useColorModeValue('green.400', 'green.400');
   const [copied, setCopied] = useState(false);
+  const {
+    assetName: cliAssetName,
+    error: cliReleaseError,
+    installCommand: cliInstallCommand,
+    isLoading: isCliReleaseLoading,
+    releaseUrl: cliReleaseUrl,
+    tarballUrl: cliTarballUrl,
+  } = useLatestCliRelease();
 
   const handleCopyInstall = async () => {
-    await navigator.clipboard.writeText(CLI_INSTALL_COMMAND);
+    await navigator.clipboard.writeText(cliInstallCommand);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
@@ -97,7 +104,7 @@ const Downloads: React.FC = () => {
                     Install
                   </Text>
                   <HStack align="stretch" spacing={0}>
-                    <CodeBlock>{CLI_INSTALL_COMMAND}</CodeBlock>
+                    <CodeBlock>{cliInstallCommand}</CodeBlock>
                     <Button
                       aria-label="Copy install command"
                       borderLeft="0"
@@ -109,17 +116,22 @@ const Downloads: React.FC = () => {
                       h="auto"
                       minW="56px"
                       onClick={handleCopyInstall}
-                      title={copied ? 'Copied!' : 'Copy install command'}
+                      title={copied ? 'Copied!' : isCliReleaseLoading ? 'Loading latest release...' : 'Copy install command'}
                     >
                       {copied ? '✓' : <CopyIcon size={22} />}
                     </Button>
                   </HStack>
+                  {cliReleaseError && (
+                    <Text color="orange.200" fontSize="sm" mt={2}>
+                      Could not verify the latest GitHub release, so this is using the stable latest-release URL.
+                    </Text>
+                  )}
                 </Box>
 
                 <HStack spacing={3} flexWrap="wrap">
                   <Button
                     as="a"
-                    href={CLI_TARBALL_URL}
+                    href={cliTarballUrl}
                     colorScheme="green"
                     download
                   >
@@ -127,7 +139,7 @@ const Downloads: React.FC = () => {
                   </Button>
                   <Button
                     as="a"
-                    href="https://github.com/CommitQuest/cli/releases/tag/v0.1.2"
+                    href={cliReleaseUrl}
                     target="_blank"
                     rel="noreferrer"
                     variant="outline"
@@ -147,7 +159,7 @@ const Downloads: React.FC = () => {
                 <Text color="green.400" fontSize="sm">
                   This release is currently distributed as an npm package tarball. If you download
                   it first, install the local file with{' '}
-                  <Code colorScheme="green">npm install -g ./commitquest-0.1.2.tgz</Code>.
+                  <Code colorScheme="green">npm install -g ./{cliAssetName}</Code>.
                 </Text>
               </VStack>
             </CardBody>

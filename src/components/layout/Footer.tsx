@@ -40,7 +40,8 @@ const Footer: React.FC = () => {
               GitHub
             </Link>
             <Link 
-              href="/support" 
+              href="https://discord.gg/XuKJJBAuKH" 
+              isExternal 
               color="green.400" 
               _hover={{ color: 'green.300', textDecoration: 'underline' }}
               transition="color 0.2s"
@@ -49,6 +50,20 @@ const Footer: React.FC = () => {
             </Link>
           </Flex>
         </Flex>
+        <Box borderTop="1px solid" borderColor="green.800" mt={4} pt={4}>
+          <Text fontSize="xs" color="green.500" textAlign={{ base: 'center', md: 'left' }}>
+            Character art from{' '}
+            <Link
+              href="https://krishna-palacio.itch.io/"
+              isExternal
+              color="green.400"
+              _hover={{ color: 'green.300', textDecoration: 'underline' }}
+            >
+              Krishna Palacio&apos;s Minifantasy series
+            </Link>
+            .
+          </Text>
+        </Box>
       </Container>
     </Box>
   );

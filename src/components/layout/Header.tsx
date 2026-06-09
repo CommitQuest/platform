@@ -55,7 +55,7 @@ const Header: React.FC = () => {
             colorScheme="green" 
             variant="ghost" 
             _hover={{ bg: 'green.400', color: 'commitQuest.background' }}
-            onClick={() => {}}
+            onClick={() => window.open('https://discord.gg/XuKJJBAuKH', '_blank', 'noopener,noreferrer')}
           >
             Support
           </Button>

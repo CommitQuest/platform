@@ -2,14 +2,13 @@ import React, { CSSProperties, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BsDiscord, BsGithub } from 'react-icons/bs';
 import { FaRegCopy } from 'react-icons/fa';
+import { useLatestCliRelease } from '../hooks/useLatestCliRelease';
 
 const GREEN = '#00ff41';
 const BACKGROUND = '#0a1a0a';
 const DARK_BACKGROUND = '#050a05';
 const GRID = '#123312';
 const SHADOW_GREEN = '#005c16';
-const CLI_TARBALL_URL = 'https://github.com/CommitQuest/cli/releases/download/v0.1.2/commitquest-0.1.2.tgz';
-const CLI_INSTALL_COMMAND = `npm install -g ${CLI_TARBALL_URL}`;
 
 const TYPING_TEXT = [
   "$ git commit -m 'feat: add authentication system'",
@@ -64,24 +63,36 @@ const XP_ACTIONS = [
 ];
 
 const CLI_LINES = [
-  { delay: 0, type: 'input', text: '$ commitquest status' },
+  { delay: 0, type: 'input', text: '$ commitquest dashboard' },
+  { delay: 0.2, type: 'output', text: '🏰 Loading your CommitQuest Dashboard...' },
   { delay: 0.3, type: 'output', text: '' },
-  { delay: 0.4, type: 'hero', text: '  ⚔ HERO: Aldric the Code Slayer  LV.41' },
-  { delay: 0.5, type: 'stat', text: '  CLASS:    Web Wizard' },
-  { delay: 0.6, type: 'stat', text: '  XP:       8,420 / 10,000 ████████░░ 84%' },
-  { delay: 0.7, type: 'stat', text: '  STREAK:   14 days  🔥' },
-  { delay: 0.8, type: 'stat', text: '  GUILD:    Open Source Covenant' },
-  { delay: 0.9, type: 'output', text: '' },
-  { delay: 1.0, type: 'input', text: "$ git commit -m 'fix: slay infinite loop dragon'" },
-  { delay: 1.3, type: 'success', text: '  ✓ Commit registered by the Arcane Registry' },
-  { delay: 1.5, type: 'xp', text: '  +15 XP  →  New Total: 8,435 XP' },
-  { delay: 1.7, type: 'loot', text: '  🎁 LOOT DROP: Scroll of Clean Code (Uncommon)' },
-  { delay: 1.9, type: 'output', text: '' },
-  { delay: 2.0, type: 'input', text: '$ commitquest inventory' },
-  { delay: 2.3, type: 'item', text: '  [EQUIPPED]  Vim Blade of Precision   ★★★★☆' },
-  { delay: 2.4, type: 'item', text: '  [EQUIPPED]  Cloak of Dark Mode       ★★★☆☆' },
-  { delay: 2.5, type: 'item', text: '  [BAG]       Scroll of Clean Code     ★★☆☆☆  NEW' },
-  { delay: 2.6, type: 'item', text: '  [BAG]       Potion of Caffeine ×3    ★☆☆☆☆' },
+  { delay: 0.4, type: 'hero', text: '👤 Logged in as: NoahCCB' },
+  { delay: 0.5, type: 'output', text: '' },
+  { delay: 0.6, type: 'hero', text: '👤 Your Character' },
+  { delay: 0.7, type: 'output', text: '' },
+  { delay: 0.8, type: 'stat', text: 'Name: Boots' },
+  { delay: 0.9, type: 'stat', text: 'Class: ⚔️ Full-Stack Fighter' },
+  { delay: 1.0, type: 'stat', text: 'Species: 👤 Goblin' },
+  { delay: 1.1, type: 'divider', text: '──────────────────────────────────────────────────' },
+  { delay: 1.2, type: 'output', text: '' },
+  { delay: 1.3, type: 'hero', text: '🏰 CommitQuest Dashboard' },
+  { delay: 1.4, type: 'output', text: '' },
+  { delay: 1.5, type: 'hero', text: '⚔️  Player Stats:' },
+  { delay: 1.6, type: 'stat', text: '  Level Progress:' },
+  { delay: 1.7, type: 'stat', text: '  Lv 5 [████████░░░░░░░░░░░░] Lv 6' },
+  { delay: 1.8, type: 'stat', text: '  96/253 XP (37.94%)' },
+  { delay: 1.9, type: 'stat', text: '  Total XP: 602' },
+  { delay: 2.0, type: 'stat', text: '  Experience: 602 XP' },
+  { delay: 2.1, type: 'stat', text: '  Commits: 37' },
+  { delay: 2.2, type: 'stat', text: '  Streak: 2 days' },
+  { delay: 2.3, type: 'output', text: '' },
+  { delay: 2.4, type: 'hero', text: '👤 Character:' },
+  { delay: 2.5, type: 'stat', text: '  Name: Boots' },
+  { delay: 2.6, type: 'output', text: '' },
+  { delay: 2.7, type: 'hero', text: '🏆 Recent Achievements:' },
+  { delay: 2.8, type: 'item', text: "  🕯️ Flame Keeper" },
+  { delay: 2.9, type: 'item', text: "  🍃 Druid's Patience" },
+  { delay: 3.0, type: 'item', text: '  📘 Adept' },
 ];
 
 const milestones = [
@@ -146,6 +157,7 @@ const LandingPage: React.FC = () => {
   const [blink, setBlink] = useState(true);
   const [xp, setXp] = useState(0);
   const [copied, setCopied] = useState(false);
+  const { installCommand: cliInstallCommand } = useLatestCliRelease();
 
   useEffect(() => {
     const line = TYPING_TEXT[lineIndex];
@@ -172,7 +184,7 @@ const LandingPage: React.FC = () => {
   }, []);
 
   const handleCopyInstall = async () => {
-    await navigator.clipboard.writeText(CLI_INSTALL_COMMAND);
+    await navigator.clipboard.writeText(cliInstallCommand);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
@@ -254,7 +266,7 @@ const LandingPage: React.FC = () => {
                 START YOUR ADVENTURE
               </button>
               <div className="cq-install-group">
-                <div className="cq-install-chip">$ {CLI_INSTALL_COMMAND}</div>
+                <div className="cq-install-chip">$ {cliInstallCommand}</div>
                 <button
                   aria-label="Copy install command"
                   className="cq-copy-button cq-hero-copy-button"
@@ -354,7 +366,7 @@ const LandingPage: React.FC = () => {
                 <PixelBorder style={{ padding: 24 }}>
                   <div className="cq-feature-label">▸ INSTALL THE CLI</div>
                   <div className="cq-copy-row">
-                    <span>{CLI_INSTALL_COMMAND}</span>
+                    <span>{cliInstallCommand}</span>
                     <button className="cq-copy-button" onClick={handleCopyInstall}>
                       {copied ? '✓ COPIED' : 'COPY'}
                     </button>
@@ -396,7 +408,8 @@ const LandingPage: React.FC = () => {
               <div className="cq-feature-label">▸ RESOURCES</div>
               <a className="cq-footer-link" href="/downloads">&gt; Downloads</a>
               <a className="cq-footer-link" href="https://github.com/commitquest/commitquest">&gt; GitHub Repository</a>
-              <a className="cq-footer-link" href="https://discord.gg/XuKJJBAuKH">&gt; Discord Guild</a>
+              <a className="cq-footer-link" href="https://discord.gg/XuKJJBAuKH" rel="noreferrer" target="_blank">&gt; Discord Guild</a>
+              <a className="cq-footer-link" href="https://discord.gg/XuKJJBAuKH" rel="noreferrer" target="_blank">&gt; Support</a>
             </div>
 
             <div>
@@ -410,6 +423,12 @@ const LandingPage: React.FC = () => {
           <div className="cq-built">
             <div>BUILT WITH &lt;3 BY ADVENTURERS LIKE YOU</div>
             <div>© 2026 CommitQuest</div>
+            <div>
+              CHARACTER ART FROM{' '}
+              <a href="https://krishna-palacio.itch.io/" rel="noreferrer" target="_blank">
+                KRISHNA PALACIO&apos;S MINIFANTASY SERIES
+              </a>
+            </div>
           </div>
         </div>
       </footer>
@@ -819,7 +838,11 @@ const landingCss = `
     align-items: flex-start;
     display: grid;
     gap: 32px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  }
+
+  .cq-cli-grid > * {
+    min-width: 0;
   }
 
   .cq-terminal-bar {
@@ -848,8 +871,11 @@ const landingCss = `
   }
 
   .cq-terminal {
-    font: 13px/1.8 ${monoFont};
+    background: #000;
+    font: 13px/1.7 ${monoFont};
+    max-height: 620px;
     overflow-x: auto;
+    overflow-y: auto;
     padding: 20px;
   }
 
@@ -963,6 +989,15 @@ const landingCss = `
     text-align: center;
   }
 
+  .cq-built a {
+    color: ${GREEN};
+    text-decoration: underline;
+  }
+
+  .cq-built a:hover {
+    color: #8aff9f;
+  }
+
   @media (max-width: 900px) {
     .cq-card-grid,
     .cq-cli-grid,
@@ -994,6 +1029,10 @@ const landingCss = `
       min-width: 36px;
       padding: 8px;
     }
+
+    .cq-terminal {
+      max-height: none;
+    }
   }
 
   @media (max-width: 520px) {
@@ -1010,6 +1049,39 @@ const landingCss = `
 
     .cq-arrow {
       display: none;
+    }
+
+    .cq-section {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .cq-terminal-bar {
+      padding: 8px 10px;
+    }
+
+    .cq-terminal-title {
+      font-size: 10px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cq-terminal {
+      font-size: 11px;
+      line-height: 1.65;
+      padding: 14px 10px;
+    }
+
+    .cq-terminal-output {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .cq-feature-card {
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
     }
   }
 `;
