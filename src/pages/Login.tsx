@@ -32,25 +32,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   callback_failed: 'OAuth callback processing failed.',
 };
 
-const getAuthCallbackUrl = (): string => {
-  if (typeof window === 'undefined') return '';
-  return `${window.location.origin}/auth/callback`;
-};
-
-const createOAuthNonce = (): string => {
+const createOAuthState = (): string => {
   const bytes = new Uint8Array(16);
   if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
     window.crypto.getRandomValues(bytes);
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
   return Math.random().toString(36).slice(2);
-};
-
-const buildOAuthState = (returnTo: string): string => {
-  const nonce = createOAuthNonce();
-  if (!returnTo) return nonce;
-  const payload = btoa(returnTo).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `${nonce}.${payload}`;
 };
 
 const Login: React.FC = () => {
@@ -62,14 +50,13 @@ const Login: React.FC = () => {
   const errorMessage = errorParam ? (ERROR_MESSAGES[errorParam] ?? `Authentication error: ${errorParam}`) : null;
 
   const handleGitHubLogin = () => {
-    const returnTo = getAuthCallbackUrl();
     const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
     // Direct to GitHub OAuth so the user never hits the backend URL (avoids "dangerous site" / stuck on Heroku)
     if (clientId && clientId.trim()) {
       const backendUrl = getBackendUrl();
       // redirect_uri must be the backend callback URL where GitHub sends the user after auth
       const redirectUri = `${backendUrl}/api/auth/web/github/callback`;
-      const state = buildOAuthState(returnTo);
+      const state = createOAuthState();
       const params = new URLSearchParams({
         client_id: clientId.trim(),
         redirect_uri: redirectUri,
@@ -79,7 +66,8 @@ const Login: React.FC = () => {
       window.location.href = `${GITHUB_AUTH_URL}?${params.toString()}`;
       return;
     }
-    // Fallback: backend starts the flow and uses return_to for the post-login redirect.
+    // Fallback: backend starts the flow. Tell backend where to send the user after login (so you land on localhost:3000, not Heroku).
+    const returnTo = typeof window !== 'undefined' ? `${window.location.origin}/web/auth/callback` : '';
     const params = new URLSearchParams();
     if (returnTo) params.set('return_to', returnTo);
     const query = params.toString();
