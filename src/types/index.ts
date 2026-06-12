@@ -9,6 +9,14 @@ export interface User {
 }
 
 // Character types
+export interface AvatarOption {
+  id: number;
+  idle_url: string;
+  celebration_url?: string;
+  preview_swatch_hex?: string | null;
+  display_order?: number;
+}
+
 export interface Character {
   id: number;
   user_id: number;
@@ -21,6 +29,12 @@ export interface Character {
   stats: Record<string, any>;
   equipment: Record<string, any>;
   avatar_url?: string;
+  avatar_option_id?: number | null;
+  avatar_assets?: {
+    idle?: string;
+    celebration?: string;
+  };
+  avatar_options?: AvatarOption[];
 }
 
 // Achievement types

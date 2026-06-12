@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -38,6 +38,7 @@ import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { characterAPI } from '../services/api';
 import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
+import AvatarOptionPicker, { AvatarOption } from '../components/character/AvatarOptionPicker';
 
 interface ClassOption {
   id: number;
@@ -49,7 +50,14 @@ interface SpeciesOption {
   id: number;
   name: string;
   description?: string;
+  avatar_options?: AvatarOption[];
 }
+
+const resolveAvatarOptionId = (options: AvatarOption[], preferredId?: number | null) => {
+  if (options.length === 0) return null;
+  if (preferredId && options.some((option) => option.id === preferredId)) return preferredId;
+  return options[0].id;
+};
 
 const Dashboard: React.FC = () => {
   const { user, background, loading, error, refreshUser } = useUser();
@@ -61,10 +69,19 @@ const Dashboard: React.FC = () => {
   const [editName, setEditName] = useState('');
   const [editClassId, setEditClassId] = useState<string>('');
   const [editSpeciesId, setEditSpeciesId] = useState<string>('');
+  const [editAvatarOptionId, setEditAvatarOptionId] = useState<number | null>(null);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [species, setSpecies] = useState<SpeciesOption[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const selectedEditSpecies = useMemo(
+    () => species.find((sp) => sp.id.toString() === editSpeciesId),
+    [species, editSpeciesId]
+  );
+  const selectedEditAvatarOptions = useMemo(
+    () => selectedEditSpecies?.avatar_options ?? [],
+    [selectedEditSpecies]
+  );
 
   // When edit modal opens, populate form and fetch class/species options
   useEffect(() => {
@@ -73,6 +90,7 @@ const Dashboard: React.FC = () => {
     setEditName(c.name);
     setEditClassId(c.classes?.id?.toString() ?? '');
     setEditSpeciesId(c.species?.id?.toString() ?? '');
+    setEditAvatarOptionId(c.avatar_option_id ?? null);
     setEditError(null);
     (async () => {
       try {
@@ -80,8 +98,11 @@ const Dashboard: React.FC = () => {
           characterAPI.getClasses(),
           characterAPI.getSpecies(),
         ]);
+        const speciesOptions = speciesRes.species ?? [];
+        const currentSpecies = speciesOptions.find((sp: SpeciesOption) => sp.id === c.species?.id);
         setClasses(classesRes.classes ?? []);
-        setSpecies(speciesRes.species ?? []);
+        setSpecies(speciesOptions);
+        setEditAvatarOptionId(resolveAvatarOptionId(currentSpecies?.avatar_options ?? [], c.avatar_option_id));
       } catch {
         setEditError('Failed to load options');
       }
@@ -100,6 +121,9 @@ const Dashboard: React.FC = () => {
         name: editName.trim(),
         class_id: editClassId ? parseInt(editClassId, 10) : undefined,
         species_id: editSpeciesId ? parseInt(editSpeciesId, 10) : undefined,
+        ...(selectedEditAvatarOptions.length > 0 && editAvatarOptionId
+          ? { avatar_option_id: editAvatarOptionId }
+          : {}),
       });
       await refreshUser();
       onClose();
@@ -393,7 +417,12 @@ const Dashboard: React.FC = () => {
                 <FormLabel color="green.400">Species</FormLabel>
                 <Select
                   value={editSpeciesId}
-                  onChange={(e) => setEditSpeciesId(e.target.value)}
+                  onChange={(e) => {
+                    const nextSpeciesId = e.target.value;
+                    const nextSpecies = species.find((sp) => sp.id.toString() === nextSpeciesId);
+                    setEditSpeciesId(nextSpeciesId);
+                    setEditAvatarOptionId(resolveAvatarOptionId(nextSpecies?.avatar_options ?? [], editAvatarOptionId));
+                  }}
                   bg="commitQuest.surface"
                   borderColor="green.400"
                   color="green.400"
@@ -406,6 +435,16 @@ const Dashboard: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
+              {selectedEditAvatarOptions.length > 0 && (
+                <FormControl>
+                  <FormLabel color="green.400">Appearance</FormLabel>
+                  <AvatarOptionPicker
+                    options={selectedEditAvatarOptions}
+                    selectedId={editAvatarOptionId}
+                    onSelect={setEditAvatarOptionId}
+                  />
+                </FormControl>
+              )}
             </VStack>
           </ModalBody>
           <ModalFooter borderTop="1px" borderColor="green.400">

@@ -13,10 +13,13 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { authAPI } from '../services/api';
+import { useUser } from '../contexts/UserContext';
 
 const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshUser } = useUser();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string>('');
 
@@ -30,18 +33,32 @@ const AuthCallback: React.FC = () => {
       return;
     }
 
-    if (token) {
-      localStorage.setItem('commitquest_token', token);
-      localStorage.setItem('commitquest_logged_in', 'true');
-      setStatus('success');
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
-    } else {
+    if (!token) {
       setStatus('error');
       setError('No authentication token received');
+      return;
     }
-  }, [searchParams, navigate]);
+
+    const completeLogin = async () => {
+      try {
+        localStorage.setItem('commitquest_token', token);
+        localStorage.setItem('commitquest_logged_in', 'true');
+
+        const session = await authAPI.getMe();
+        await refreshUser();
+
+        setStatus('success');
+        setTimeout(() => {
+          navigate(session?.needsCharacter ? '/onboarding/character' : '/dashboard');
+        }, 750);
+      } catch (err) {
+        setStatus('error');
+        setError(err instanceof Error ? err.message : 'Failed to complete login');
+      }
+    };
+
+    completeLogin();
+  }, [searchParams, navigate, refreshUser]);
 
   const handleRetry = () => {
     navigate('/login');
@@ -105,7 +122,7 @@ const AuthCallback: React.FC = () => {
             <Box>
               <AlertTitle>Login Successful!</AlertTitle>
               <AlertDescription>
-                You have been successfully authenticated. Redirecting to dashboard...
+                You have been successfully authenticated. Preparing your adventure...
               </AlertDescription>
             </Box>
           </Alert>

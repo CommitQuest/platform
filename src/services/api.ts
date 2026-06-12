@@ -64,18 +64,27 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<
   try {
     const url = endpoint.startsWith('/') ? `${API_BASE_URL}${endpoint}` : `${API_BASE_URL}/${endpoint}`;
     const response = await fetch(url, config);
+    const responseText = await response.text();
+    let data: any = null;
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = { message: responseText };
+      }
+    }
     
     if (!response.ok) {
       if (response.status === 401) {
         // Token expired or invalid
         logout();
         window.location.href = '/login';
-        throw new Error('Authentication required');
+        throw new Error(data?.error || data?.message || 'Authentication required');
       }
-      throw new Error(`API request failed: ${response.status}`);
+      throw new Error(data?.error || data?.message || `API request failed: ${response.status}`);
     }
 
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('API request error:', error);
     throw error;
@@ -166,8 +175,15 @@ export const characterAPI = {
   getClasses: () => apiRequest('/api/character/classes'),
   getSpecies: () => apiRequest('/api/character/species'),
 
+  // Create first character during onboarding
+  createCharacter: (data: { name: string; class_id: number; species_id: number; avatar_option_id?: number }) =>
+    apiRequest('/api/character', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Update character
-  updateCharacter: (data: { name?: string; class_id?: number; species_id?: number }) =>
+  updateCharacter: (data: { name?: string; class_id?: number; species_id?: number; avatar_option_id?: number }) =>
     apiRequest('/api/character', {
       method: 'PUT',
       body: JSON.stringify(data),

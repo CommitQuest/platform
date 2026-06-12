@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { userAPI, assetsAPI, isLoggedIn } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { authAPI, userAPI, assetsAPI, isLoggedIn } from '../services/api';
 
 // User data types
 interface Character {
@@ -8,6 +8,12 @@ interface Character {
   level: number;
   xp: number;
   xpToNext: number;
+  avatar_option_id?: number | null;
+  avatar_assets?: {
+    idle?: string;
+    celebration?: string;
+  };
+  avatar_options?: AvatarOption[];
   avatar_url?: string;
   classes?: {
     id: number;
@@ -21,7 +27,16 @@ interface Character {
     description: string;
     base_stats: any;
     avatar_url?: string;
+    avatar_options?: AvatarOption[];
   };
+}
+
+interface AvatarOption {
+  id: number;
+  idle_url: string;
+  celebration_url?: string;
+  preview_swatch_hex?: string | null;
+  display_order?: number;
 }
 
 interface Achievement {
@@ -60,12 +75,32 @@ interface UserData {
   levelProgress: LevelProgress | null;
 }
 
+interface AuthSession {
+  user?: {
+    id: number;
+    github_username: string;
+    email?: string;
+    avatar_url?: string;
+    created_at: string;
+    character?: Character | null;
+  };
+  hasInstallation?: boolean;
+  needsInstallation?: boolean;
+  hasCharacter?: boolean;
+  needsCharacter?: boolean;
+  character?: Character | null;
+}
+
 interface UserContextType {
   user: UserData | null;
+  session: AuthSession | null;
+  hasCharacter: boolean | null;
+  needsCharacter: boolean;
   background: Background | null;
   loading: boolean;
   error: string | null;
   refreshUser: () => Promise<void>;
+  refreshSession: () => Promise<AuthSession | null>;
   clearUser: () => void;
   refreshBackground: () => Promise<void>;
 }
@@ -78,16 +113,36 @@ interface UserProviderProps {
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserData | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [background, setBackground] = useState<Background | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUserData = async () => {
+  const fetchSession = useCallback(async (): Promise<AuthSession | null> => {
+    if (!isLoggedIn()) {
+      setSession(null);
+      return null;
+    }
+
+    const sessionResponse = await authAPI.getMe();
+    setSession(sessionResponse);
+    return sessionResponse;
+  }, []);
+
+  const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       if (!isLoggedIn()) {
+        setUser(null);
+        setSession(null);
+        setBackground(null);
+        return;
+      }
+
+      const currentSession = await fetchSession();
+      if (currentSession?.needsCharacter === true) {
         setUser(null);
         setBackground(null);
         return;
@@ -127,9 +182,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchSession]);
 
-  const fetchBackground = async () => {
+  const fetchBackground = useCallback(async () => {
     try {
       if (!isLoggedIn()) {
         setBackground(null);
@@ -142,32 +197,41 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       console.error('Error in fetchBackground:', err);
       setBackground(null);
     }
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     await fetchUserData();
-  };
+  }, [fetchUserData]);
 
-  const refreshBackground = async () => {
+  const refreshSession = useCallback(async () => {
+    return fetchSession();
+  }, [fetchSession]);
+
+  const refreshBackground = useCallback(async () => {
     await fetchBackground();
-  };
+  }, [fetchBackground]);
 
-  const clearUser = () => {
+  const clearUser = useCallback(() => {
     setUser(null);
+    setSession(null);
     setBackground(null);
     setError(null);
-  };
+  }, []);
 
   useEffect(() => {
     fetchUserData();
-  }, []);
+  }, [fetchUserData]);
 
   const value: UserContextType = {
     user,
+    session,
+    hasCharacter: session?.hasCharacter ?? (user?.character ? true : null),
+    needsCharacter: session?.needsCharacter === true,
     background,
     loading,
     error,
     refreshUser,
+    refreshSession,
     clearUser,
     refreshBackground,
   };
