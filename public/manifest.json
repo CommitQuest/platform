@@ -3,7 +3,7 @@
   "name": "CommitQuest",
   "icons": [
     {
-      "src": "cq-logo-color.png",
+      "src": "cq-logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }
