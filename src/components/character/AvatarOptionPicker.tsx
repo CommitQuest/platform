@@ -13,9 +13,10 @@ interface AvatarOptionPickerProps {
   options: AvatarOption[];
   selectedId: number | null;
   onSelect: (id: number) => void;
+  imageScale?: number;
 }
 
-const AvatarOptionPicker: React.FC<AvatarOptionPickerProps> = ({ options, selectedId, onSelect }) => {
+const AvatarOptionPicker: React.FC<AvatarOptionPickerProps> = ({ options, selectedId, onSelect, imageScale = 1 }) => {
   if (options.length === 0) return null;
 
   const sortedOptions = [...options].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
@@ -51,6 +52,7 @@ const AvatarOptionPicker: React.FC<AvatarOptionPickerProps> = ({ options, select
                   boxSize="full"
                   objectFit="contain"
                   p={2}
+                  transform={`scale(${imageScale})`}
                 />
               </Box>
             </VStack>

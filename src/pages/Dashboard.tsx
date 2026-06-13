@@ -442,6 +442,7 @@ const Dashboard: React.FC = () => {
                     options={selectedEditAvatarOptions}
                     selectedId={editAvatarOptionId}
                     onSelect={setEditAvatarOptionId}
+                    imageScale={1.45}
                   />
                 </FormControl>
               )}
