@@ -16,10 +16,13 @@ interface AvatarOptionPickerProps {
   imageScale?: number;
 }
 
+export const sortAvatarOptions = (options: AvatarOption[]) =>
+  [...options].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
 const AvatarOptionPicker: React.FC<AvatarOptionPickerProps> = ({ options, selectedId, onSelect, imageScale = 1 }) => {
   if (options.length === 0) return null;
 
-  const sortedOptions = [...options].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+  const sortedOptions = sortAvatarOptions(options);
 
   return (
     <SimpleGrid columns={{ base: 3, sm: 4, md: 6 }} spacing={3} w="full">

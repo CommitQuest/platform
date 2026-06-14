@@ -38,7 +38,7 @@ import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { characterAPI } from '../services/api';
 import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
-import AvatarOptionPicker, { AvatarOption } from '../components/character/AvatarOptionPicker';
+import AvatarOptionPicker, { AvatarOption, sortAvatarOptions } from '../components/character/AvatarOptionPicker';
 
 interface ClassOption {
   id: number;
@@ -54,9 +54,10 @@ interface SpeciesOption {
 }
 
 const resolveAvatarOptionId = (options: AvatarOption[], preferredId?: number | null) => {
-  if (options.length === 0) return null;
-  if (preferredId && options.some((option) => option.id === preferredId)) return preferredId;
-  return options[0].id;
+  const sortedOptions = sortAvatarOptions(options);
+  if (sortedOptions.length === 0) return null;
+  if (preferredId && sortedOptions.some((option) => option.id === preferredId)) return preferredId;
+  return sortedOptions[0].id;
 };
 
 const Dashboard: React.FC = () => {
@@ -79,7 +80,7 @@ const Dashboard: React.FC = () => {
     [species, editSpeciesId]
   );
   const selectedEditAvatarOptions = useMemo(
-    () => selectedEditSpecies?.avatar_options ?? [],
+    () => sortAvatarOptions(selectedEditSpecies?.avatar_options ?? []),
     [selectedEditSpecies]
   );
 

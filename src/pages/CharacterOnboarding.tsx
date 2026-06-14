@@ -26,7 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { characterAPI } from '../services/api';
 import { useUser } from '../contexts/UserContext';
-import AvatarOptionPicker, { AvatarOption } from '../components/character/AvatarOptionPicker';
+import AvatarOptionPicker, { AvatarOption, sortAvatarOptions } from '../components/character/AvatarOptionPicker';
 
 interface CharacterChoice {
   id: number;
@@ -180,7 +180,7 @@ const CharacterOnboarding: React.FC = () => {
     [species, selectedSpeciesId]
   );
   const selectedAvatarOptions = useMemo(
-    () => selectedSpecies?.avatar_options ?? [],
+    () => sortAvatarOptions(selectedSpecies?.avatar_options ?? []),
     [selectedSpecies]
   );
 
