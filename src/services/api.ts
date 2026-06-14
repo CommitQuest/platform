@@ -213,6 +213,21 @@ export const assetsAPI = {
     }),
   // Get user inventory
   getUserInventory: () => apiRequest('/api/assets/inventory'),
+  // Equip a visual/inventory item
+  equipItem: (itemId: number, slot?: string | null) =>
+    apiRequest('/api/assets/equip', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_id: itemId,
+        ...(slot ? { slot } : {}),
+      }),
+    }),
+  // Unequip an item
+  unequipItem: (itemId: number) =>
+    apiRequest('/api/assets/unequip', {
+      method: 'POST',
+      body: JSON.stringify({ item_id: itemId }),
+    }),
 };
 
 // Stats API calls

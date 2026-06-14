@@ -18,13 +18,13 @@ import {
   useColorModeValue,
   SimpleGrid,
   Tooltip,
-  Avatar,
   Button,
 } from '@chakra-ui/react';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
-import { UserInventory, InventoryResponse } from '../types';
+import { UserInventory, InventoryResponse, Item } from '../types';
 import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
+import AvatarScene from '../components/character/AvatarScene';
 
 interface OwnedBackground {
   id: number;
@@ -40,13 +40,30 @@ interface OwnedBackground {
   equipped: boolean;
 }
 
+const getInventoryItem = (inventoryItem: UserInventory): Partial<Item & UserInventory> =>
+  (inventoryItem.items ?? inventoryItem.item ?? inventoryItem) as Partial<Item & UserInventory>;
+const getInventoryItemId = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).id ?? inventoryItem.item_id;
+const getInventoryItemType = (inventoryItem: UserInventory) =>
+  getInventoryItem(inventoryItem).item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
+const getInventoryItemName = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).name ?? inventoryItem.name ?? 'Unknown item';
+const getInventoryItemDescription = (inventoryItem: UserInventory) =>
+  getInventoryItem(inventoryItem).description ?? inventoryItem.description ?? '';
+const getInventoryItemRarity = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).rarity ?? inventoryItem.rarity ?? 'common';
+const getInventoryItemIcon = (inventoryItem: UserInventory) => {
+  const item = getInventoryItem(inventoryItem);
+  return item.asset_variant?.preview_url ?? inventoryItem.asset_variant?.preview_url ?? item.file_path;
+};
+const isVisualItem = (inventoryItem: UserInventory) =>
+  (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true;
+
 const Inventory: React.FC = () => {
-  const { user, loading, error, refreshBackground } = useUser();
+  const { user, background, loading, error, refreshBackground } = useUser();
   const [inventory, setInventory] = useState<UserInventory[]>([]);
   const [backgrounds, setBackgrounds] = useState<OwnedBackground[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   const [backgroundsLoading, setBackgroundsLoading] = useState(true);
   const [equippingId, setEquippingId] = useState<number | null>(null);
+  const [itemActionId, setItemActionId] = useState<number | null>(null);
   const [, setInventoryError] = useState<string | null>(null);
   
   const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
@@ -68,6 +85,36 @@ const Inventory: React.FC = () => {
     }
   };
 
+  const refreshInventory = async () => {
+    const response: InventoryResponse = await assetsAPI.getUserInventory();
+    setInventory(response.items ?? response.inventory ?? []);
+    if (response.backgrounds) {
+      setBackgrounds(response.backgrounds);
+    }
+    setInventoryError(null);
+  };
+
+  const handleToggleItemEquip = async (inventoryItem: UserInventory) => {
+    const item = getInventoryItem(inventoryItem);
+    const itemId = getInventoryItemId(inventoryItem);
+    if (!itemId || !isVisualItem(inventoryItem)) return;
+
+    try {
+      setItemActionId(itemId);
+      if (inventoryItem.equipped) {
+        await assetsAPI.unequipItem(itemId);
+      } else {
+        await assetsAPI.equipItem(itemId, item.slot ?? inventoryItem.slot);
+      }
+      await refreshInventory();
+    } catch (err) {
+      console.error('Failed to update item equipment:', err);
+      setInventoryError('Failed to update item equipment');
+    } finally {
+      setItemActionId(null);
+    }
+  };
+
   // Fetch inventory data
   useEffect(() => {
     const fetchInventory = async () => {
@@ -75,10 +122,7 @@ const Inventory: React.FC = () => {
       
       try {
         setInventoryLoading(true);
-        const response: InventoryResponse = await assetsAPI.getUserInventory();
-        console.log("inventory response", response);
-        setInventory(response.inventory);
-        setInventoryError(null);
+        await refreshInventory();
       } catch (err) {
         console.error('Error fetching inventory:', err);
         setInventoryError('Failed to load inventory');
@@ -110,8 +154,11 @@ const Inventory: React.FC = () => {
   }, [user]);
 
   // Filter inventory by asset type
-  const items = inventory.filter(item => item.asset_type === 'item');
-  const apparel = inventory.filter(item => item.asset_type === 'apparel');
+  const equippedVisualItems = inventory.filter((item) => item.equipped === true && isVisualItem(item));
+  const items = inventory.filter(item => getInventoryItemType(item) === 'item');
+  const apparel = inventory.filter(item => getInventoryItemType(item) === 'apparel');
+  const auras = inventory.filter(item => getInventoryItemType(item) === 'aura');
+  const companions = inventory.filter(item => getInventoryItemType(item) === 'companion');
 
   // Get rarity color
   const getRarityColor = (rarity: string) => {
@@ -148,11 +195,12 @@ const Inventory: React.FC = () => {
           ) : (
             <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 6 }} spacing={4} w="full">
               {items.map((inventoryItem) => {
-                const item = inventoryItem.items;
-                const itemColor = getRarityColor(item.rarity);
+                const itemColor = getRarityColor(getInventoryItemRarity(inventoryItem));
+                const itemId = getInventoryItemId(inventoryItem);
+                const iconUrl = getInventoryItemIcon(inventoryItem);
                 return (
                   <Card 
-                    key={inventoryItem.id} 
+                    key={inventoryItem.inventory_id ?? inventoryItem.id} 
                     bg="commitQuest.surface" 
                     border="1px" 
                     borderColor={itemColor + '.500'}
@@ -162,10 +210,10 @@ const Inventory: React.FC = () => {
                   >
                     <CardBody p={3}>
                       <VStack spacing={2}>
-                        {item.file_path && (
+                        {iconUrl && (
                           <Image 
-                            src={item.file_path} 
-                            alt={item.name}
+                            src={iconUrl} 
+                            alt={getInventoryItemName(inventoryItem)}
                             borderRadius="md"
                             width="60px"
                             height="60px"
@@ -175,20 +223,31 @@ const Inventory: React.FC = () => {
                         )}
                         
                         <VStack spacing={1} textAlign="center">
-                          <Tooltip label={item.description} placement="top">
+                          <Tooltip label={getInventoryItemDescription(inventoryItem)} placement="top">
                             <Text fontWeight="bold" color="green.400" fontSize="xs" noOfLines={1}>
-                              {item.name}
+                              {getInventoryItemName(inventoryItem)}
                             </Text>
                           </Tooltip>
                           
                           <Badge colorScheme={itemColor} size="xs">
-                            {item.rarity}
+                            {getInventoryItemRarity(inventoryItem)}
                           </Badge>
                           
-                          {item.cost && (
+                          {getInventoryItem(inventoryItem).cost && (
                             <Text color="yellow.400" fontSize="xs" fontWeight="bold">
-                              {item.cost} Gold
+                              {getInventoryItem(inventoryItem).cost} Gold
                             </Text>
+                          )}
+                          {isVisualItem(inventoryItem) && (
+                            <Button
+                              size="xs"
+                              colorScheme="green"
+                              variant={inventoryItem.equipped ? 'solid' : 'outline'}
+                              isLoading={itemActionId === itemId}
+                              onClick={() => handleToggleItemEquip(inventoryItem)}
+                            >
+                              {inventoryItem.equipped ? 'Unequip' : 'Equip'}
+                            </Button>
                           )}
                         </VStack>
                       </VStack>
@@ -257,47 +316,22 @@ const Inventory: React.FC = () => {
       <VStack spacing={6} align="stretch">
         {/* Header with Character Info and Apparel */}
         <HStack spacing={6} align="start">
-          {/* Small Character Avatar */}
-          
           <Box
             bg="commitQuest.surface"
             borderRadius="md"
-            p={4}
             border="2px"
             borderColor="green.400"
             minW="120px"
             minH="120px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
             flexShrink={0}
             position="relative"
-            // overflow="hidden"
-            sx={{
-              img: {
-                objectFit: 'cover',
-                objectPosition: 'center',
-                transform: 'scale(2)',
-              }
-            }}
+            overflow="hidden"
           >
-            <Avatar 
-              size="lg" 
-              name={character.name} 
-              src={character.avatar_url}
-              borderRadius="md"
-              position="relative"
-              zIndex={10}
-              width="100px"
-              height="100px"
-              sx={{
-                img: {
-                  objectFit: 'cover',
-                  objectPosition: 'center',
-                  transform: 'scale(2)',
-                }
-              }}
-              // style={{ top: '30px' }}
+            <AvatarScene
+              background={background}
+              character={character}
+              equippedItems={equippedVisualItems}
+              spriteScale={1.8}
             />
           </Box>
 
@@ -325,81 +359,23 @@ const Inventory: React.FC = () => {
           </Card>
         </HStack>
 
-        {/* Apparel Section */}
-        <Card bg={cardBg} border="2px" borderColor={borderColor}>
-          <CardBody>
-            <VStack align="start" spacing={4}>
-              <Heading size="md" color="green.400">Apparel</Heading>
-              
-              {inventoryLoading ? (
-                <Box display="flex" justifyContent="center" w="full" py={4}>
-                  <VStack spacing={2}>
-                    <Spinner size="md" color="green.400" />
-                    <Text color="green.400" fontSize="sm">Loading...</Text>
-                  </VStack>
-                </Box>
-              ) : apparel.length === 0 ? (
-                <Box textAlign="center" w="full" py={4}>
-                  <Text color="green.400" fontSize="sm">
-                    No apparel items found. Visit the shop to buy some!
-                  </Text>
-                </Box>
-              ) : (
-                <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 6 }} spacing={4} w="full">
-                  {apparel.map((inventoryItem) => {
-                    const item = inventoryItem.items;
-                    const itemColor = getRarityColor(item.rarity);
-                    return (
-                      <Card 
-                        key={inventoryItem.id} 
-                        bg="commitQuest.surface" 
-                        border="1px" 
-                        borderColor={itemColor + '.500'}
-                        _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
-                        transition="all 0.2s"
-                        size="sm"
-                      >
-                        <CardBody p={3}>
-                          <VStack spacing={2}>
-                            {item.file_path && (
-                              <Image 
-                                src={item.file_path} 
-                                alt={item.name}
-                                borderRadius="md"
-                                width="60px"
-                                height="60px"
-                                objectFit="cover"
-                                fallbackSrc="https://via.placeholder.com/60x60/2a2a2a/666666?text=Apparel"
-                              />
-                            )}
-                            
-                            <VStack spacing={1} textAlign="center">
-                              <Tooltip label={item.description} placement="top">
-                                <Text fontWeight="bold" color="green.400" fontSize="xs" noOfLines={1}>
-                                  {item.name}
-                                </Text>
-                              </Tooltip>
-                              
-                              <Badge colorScheme={itemColor} size="xs">
-                                {item.rarity}
-                              </Badge>
-                              
-                              {item.cost && (
-                                <Text color="yellow.400" fontSize="xs" fontWeight="bold">
-                                  {item.cost} Gold
-                                </Text>
-                              )}
-                            </VStack>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    );
-                  })}
-                </SimpleGrid>
-              )}
-            </VStack>
-          </CardBody>
-        </Card>
+        {renderInventorySection(
+          "Apparel",
+          apparel,
+          "No apparel items found. Visit the shop to buy some!"
+        )}
+
+        {renderInventorySection(
+          "Auras",
+          auras,
+          "No auras found. Visit the shop to buy some!"
+        )}
+
+        {renderInventorySection(
+          "Companions",
+          companions,
+          "No companions found. Visit the shop to buy some!"
+        )}
 
         {/* Items Section */}
         {renderInventorySection(

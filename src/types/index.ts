@@ -152,27 +152,55 @@ export interface Item {
   name: string;
   description: string;
   item_type: string;
+  slot?: string | null;
   rarity: string;
   stats: Record<string, any>;
   cost: number;
-  file_path: string;
+  file_path?: string;
   number_available: number;
   is_active: boolean;
+  has_visual?: boolean;
+  render_layer?: 'front' | 'back' | 'both';
+  asset_variant?: ItemAssetVariant | null;
+}
+
+export interface ItemAssetVariant {
+  idle_url?: string | null;
+  celebration_url?: string | null;
+  back_idle_url?: string | null;
+  back_celebration_url?: string | null;
+  preview_url?: string | null;
+  species_id?: number | null;
 }
 
 export interface UserInventory {
   id: number;
+  inventory_id?: number;
   aquired_at: string;
   user_id: number;
   item_id: number;
   quantity: number;
   background_id?: number;
   active: boolean;
+  equipped?: boolean;
   asset_type: string;
-  items: Item;
+  items?: Item;
+  item?: Item;
+  name?: string;
+  description?: string;
+  item_type?: string;
+  slot?: string | null;
+  rarity?: string;
+  cost?: number;
+  file_path?: string;
+  has_visual?: boolean;
+  render_layer?: 'front' | 'back' | 'both';
+  asset_variant?: ItemAssetVariant | null;
 }
 
 export interface InventoryResponse {
-  inventory: UserInventory[];
+  inventory?: UserInventory[];
+  items?: UserInventory[];
+  backgrounds?: any[];
   count: number;
 } 

@@ -19,7 +19,6 @@ import {
   Alert,
   AlertIcon,
   useColorModeValue,
-  Image,
   Button,
   Modal,
   ModalOverlay,
@@ -36,9 +35,10 @@ import {
 } from '@chakra-ui/react';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import { characterAPI } from '../services/api';
-import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
+import { assetsAPI, characterAPI } from '../services/api';
 import AvatarOptionPicker, { AvatarOption, sortAvatarOptions } from '../components/character/AvatarOptionPicker';
+import AvatarScene from '../components/character/AvatarScene';
+import { UserInventory } from '../types';
 
 interface ClassOption {
   id: number;
@@ -60,6 +60,12 @@ const resolveAvatarOptionId = (options: AvatarOption[], preferredId?: number | n
   return sortedOptions[0].id;
 };
 
+const getInventoryItem = (inventoryItem: UserInventory) => inventoryItem.items ?? inventoryItem.item ?? inventoryItem;
+const isVisualEquippedItem = (inventoryItem: UserInventory) =>
+  inventoryItem.equipped === true &&
+  (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true &&
+  !!(getInventoryItem(inventoryItem).asset_variant ?? inventoryItem.asset_variant);
+
 const Dashboard: React.FC = () => {
   const { user, background, loading, error, refreshUser } = useUser();
   const navigate = useNavigate();
@@ -75,6 +81,7 @@ const Dashboard: React.FC = () => {
   const [species, setSpecies] = useState<SpeciesOption[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [equippedVisualItems, setEquippedVisualItems] = useState<UserInventory[]>([]);
   const selectedEditSpecies = useMemo(
     () => species.find((sp) => sp.id.toString() === editSpeciesId),
     [species, editSpeciesId]
@@ -109,6 +116,26 @@ const Dashboard: React.FC = () => {
       }
     })();
   }, [isOpen, user?.character]);
+
+  useEffect(() => {
+    const fetchEquippedVisualItems = async () => {
+      if (!user?.character) {
+        setEquippedVisualItems([]);
+        return;
+      }
+
+      try {
+        const response = await assetsAPI.getUserInventory();
+        const inventory: UserInventory[] = response.items ?? response.inventory ?? [];
+        setEquippedVisualItems(inventory.filter(isVisualEquippedItem));
+      } catch (err) {
+        console.error('Failed to load equipped visual items:', err);
+        setEquippedVisualItems([]);
+      }
+    };
+
+    fetchEquippedVisualItems();
+  }, [user?.character]);
 
   const handleSaveCharacter = async () => {
     if (!editName.trim()) {
@@ -210,15 +237,12 @@ const Dashboard: React.FC = () => {
             position="relative"
             overflow="hidden"
           >
-            {generateBackgroundLayers(background)}
-            <Image
-              zIndex={10}
-              src={character.avatar_url}
-              alt="Avatar"
-              position="relative"
-              style={{ top: '40px' }}
+            <AvatarScene
+              background={background}
+              character={character}
+              equippedItems={equippedVisualItems}
+              spriteOffsetY={40}
             />
-            {generateForegroundLayers(background)}
           </Box>
 
           {/* Character Card */}
