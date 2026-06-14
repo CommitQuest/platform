@@ -30,7 +30,7 @@ import { FiPackage, FiShoppingBag } from 'react-icons/fi';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
 import AvatarScene from '../components/character/AvatarScene';
-import type { ShopItem, ShopPurchaseResponse, ShopResponse, UserInventory } from '../types';
+import type { InventoryResponse, Item, ShopItem, ShopPurchaseResponse, ShopResponse, UserInventory } from '../types';
 
 // Cast so TS accepts these as JSX components (react-icons types conflict with React 19)
 const ShopIcon = FiShoppingBag as React.ComponentType<{ size?: number }>;
@@ -64,52 +64,56 @@ const getRarityColor = (rarity: string) => {
   }
 };
 
-const getInventoryItem = (inventoryItem: UserInventory) => inventoryItem.items ?? inventoryItem.item ?? inventoryItem;
+const getInventoryItem = (inventoryItem: UserInventory): Partial<Item & UserInventory> =>
+  (inventoryItem.items ?? inventoryItem.item ?? inventoryItem) as Partial<Item & UserInventory>;
 
-const isVisualEquippedItem = (inventoryItem: UserInventory) =>
+const getInventoryItemType = (inventoryItem: UserInventory) =>
+  getInventoryItem(inventoryItem).item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
+
+const getInventoryItemSlot = (inventoryItem: UserInventory) =>
+  getInventoryItem(inventoryItem).slot ?? inventoryItem.slot ?? null;
+
+const isVisualItem = (inventoryItem: UserInventory) =>
   inventoryItem.equipped === true &&
   (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true &&
   !!(getInventoryItem(inventoryItem).asset_variant ?? inventoryItem.asset_variant);
 
-const createShopPreviewItem = (shopItem: ShopItem): UserInventory => {
-  const renderLayer = shopItem.render_layer ?? 'front';
-
-  return {
-    id: -shopItem.id,
-    inventory_id: -shopItem.id,
-    aquired_at: '',
-    user_id: 0,
-    item_id: shopItem.id,
-    quantity: 1,
-    active: true,
-    equipped: true,
-    asset_type: shopItem.item_type,
-    name: shopItem.name,
-    description: shopItem.description,
-    item_type: shopItem.item_type,
-    slot: shopItem.slot,
-    rarity: shopItem.rarity,
-    cost: shopItem.price_gold,
-    has_visual: shopItem.has_visual,
-    render_layer: renderLayer,
-    asset_variant: shopItem.asset_variant,
-    item: {
-      id: shopItem.id,
-      name: shopItem.name,
-      description: shopItem.description,
-      item_type: shopItem.item_type,
-      slot: shopItem.slot,
-      rarity: shopItem.rarity,
-      stats: {},
-      cost: shopItem.price_gold,
-      number_available: shopItem.quantity_available ?? 0,
-      is_active: true,
-      has_visual: shopItem.has_visual,
-      render_layer: renderLayer,
-      asset_variant: shopItem.asset_variant,
-    },
-  };
+const shouldReplaceEquippedItem = (equippedItem: UserInventory, shopItem: ShopItem) => {
+  if (getInventoryItemType(equippedItem) !== shopItem.item_type) return false;
+  if (shopItem.item_type === 'apparel' && shopItem.slot) {
+    return getInventoryItemSlot(equippedItem) === shopItem.slot;
+  }
+  return true;
 };
+
+const createPreviewInventoryItem = (shopItem: ShopItem): UserInventory => ({
+  id: shopItem.id,
+  inventory_id: -shopItem.id,
+  aquired_at: '',
+  user_id: 0,
+  item_id: shopItem.id,
+  quantity: 1,
+  active: true,
+  equipped: true,
+  asset_type: shopItem.item_type,
+  name: shopItem.name,
+  description: shopItem.description,
+  item_type: shopItem.item_type,
+  slot: shopItem.slot,
+  rarity: shopItem.rarity,
+  cost: shopItem.price_gold,
+  has_visual: shopItem.has_visual,
+  render_layer: shopItem.render_layer ?? undefined,
+  asset_variant: shopItem.asset_variant
+    ? {
+        ...shopItem.asset_variant,
+        idle_url: shopItem.asset_variant.idle_url ?? shopItem.asset_variant.preview_url,
+        celebration_url: shopItem.asset_variant.celebration_url ?? shopItem.asset_variant.preview_url,
+        back_idle_url: shopItem.asset_variant.back_idle_url ?? shopItem.asset_variant.preview_url,
+        back_celebration_url: shopItem.asset_variant.back_celebration_url ?? shopItem.asset_variant.preview_url,
+      }
+    : null,
+});
 
 const Shop: React.FC = () => {
   const { user, background, refreshUser } = useUser();
@@ -158,24 +162,35 @@ const Shop: React.FC = () => {
   }, [loadShop]);
 
   useEffect(() => {
-    const loadEquippedVisualItems = async () => {
-      if (!user?.character) {
+    const loadInventory = async () => {
+      if (!user) {
         setEquippedVisualItems([]);
         return;
       }
 
       try {
-        const response = await assetsAPI.getUserInventory();
-        const inventory: UserInventory[] = response.items ?? response.inventory ?? [];
-        setEquippedVisualItems(inventory.filter(isVisualEquippedItem));
+        const response = (await assetsAPI.getUserInventory()) as InventoryResponse;
+        const inventory = response.items ?? response.inventory ?? [];
+        setEquippedVisualItems(inventory.filter(isVisualItem));
       } catch (err) {
-        console.error('Failed to load equipped visual items for shop preview:', err);
+        console.error('Error loading equipped items for shop preview:', err);
         setEquippedVisualItems([]);
       }
     };
 
-    loadEquippedVisualItems();
-  }, [user?.character]);
+    loadInventory();
+  }, [user]);
+
+  const getPreviewEquippedItems = useCallback(
+    (shopItem: ShopItem) => {
+      if (!shopItem.has_visual || !shopItem.asset_variant) return equippedVisualItems;
+      return [
+        ...equippedVisualItems.filter((equippedItem) => !shouldReplaceEquippedItem(equippedItem, shopItem)),
+        createPreviewInventoryItem(shopItem),
+      ];
+    },
+    [equippedVisualItems]
+  );
 
   const availableTypes = useMemo(() => {
     const types = new Set(shopItems.map((item) => item.item_type).filter(Boolean));
@@ -369,20 +384,7 @@ const Shop: React.FC = () => {
               const cannotAfford = goldBalance < item.price_gold;
               const isPurchasing = purchasingItemId === item.id;
               const isDisabled = isOwned || isOutOfStock || cannotAfford || isPurchasing;
-              const previewUrl = item.asset_variant?.preview_url ?? item.asset_variant?.idle_url;
-              const canPreviewOnAvatar = item.has_visual && !!item.asset_variant && !!user?.character;
-              const previewEquippedItems = canPreviewOnAvatar
-                ? [
-                    ...equippedVisualItems.filter((inventoryItem) => {
-                      const inventoryData = getInventoryItem(inventoryItem);
-                      const inventoryItemType = inventoryData.item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
-
-                      if (inventoryData.id === item.id || inventoryItem.item_id === item.id) return false;
-                      return inventoryItemType !== item.item_type;
-                    }),
-                    createShopPreviewItem(item),
-                  ]
-                : [];
+              const canPreviewOnAvatar = !!user?.character && item.has_visual && !!item.asset_variant;
 
               return (
                 <Card
@@ -401,26 +403,18 @@ const Shop: React.FC = () => {
                         border="1px solid"
                         borderColor="green.800"
                         h="180px"
+                        position="relative"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
                         overflow="hidden"
                       >
-                        {canPreviewOnAvatar && user?.character ? (
+                        {canPreviewOnAvatar ? (
                           <AvatarScene
                             background={background}
                             character={user.character}
-                            equippedItems={previewEquippedItems}
-                            spriteOffsetY={22}
-                          />
-                        ) : previewUrl ? (
-                          <Box
-                            as="img"
-                            src={previewUrl}
-                            alt={item.name}
-                            maxH="160px"
-                            maxW="100%"
-                            objectFit="contain"
+                            equippedItems={getPreviewEquippedItems(item)}
+                            spriteScale={1.45}
                           />
                         ) : (
                           <VStack color="green.700">
@@ -451,6 +445,7 @@ const Shop: React.FC = () => {
 
                         <HStack spacing={2} flexWrap="wrap">
                           <Badge colorScheme={rarityColor}>{formatLabel(item.rarity)}</Badge>
+                          {item.has_visual && <Badge colorScheme="cyan">Visual</Badge>}
                           {item.quantity_available !== null && (
                             <Badge colorScheme="orange">{item.quantity_available} left</Badge>
                           )}
