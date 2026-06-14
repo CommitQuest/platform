@@ -16,7 +16,6 @@ import {
   Divider,
   HStack,
   Heading,
-  Image,
   Select,
   SimpleGrid,
   Spinner,
@@ -30,7 +29,8 @@ import {
 import { FiPackage, FiShoppingBag } from 'react-icons/fi';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
-import type { ShopItem, ShopPurchaseResponse, ShopResponse } from '../types';
+import AvatarScene from '../components/character/AvatarScene';
+import type { ShopItem, ShopPurchaseResponse, ShopResponse, UserInventory } from '../types';
 
 // Cast so TS accepts these as JSX components (react-icons types conflict with React 19)
 const ShopIcon = FiShoppingBag as React.ComponentType<{ size?: number }>;
@@ -64,8 +64,55 @@ const getRarityColor = (rarity: string) => {
   }
 };
 
+const getInventoryItem = (inventoryItem: UserInventory) => inventoryItem.items ?? inventoryItem.item ?? inventoryItem;
+
+const isVisualEquippedItem = (inventoryItem: UserInventory) =>
+  inventoryItem.equipped === true &&
+  (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true &&
+  !!(getInventoryItem(inventoryItem).asset_variant ?? inventoryItem.asset_variant);
+
+const createShopPreviewItem = (shopItem: ShopItem): UserInventory => {
+  const renderLayer = shopItem.render_layer ?? 'front';
+
+  return {
+    id: -shopItem.id,
+    inventory_id: -shopItem.id,
+    aquired_at: '',
+    user_id: 0,
+    item_id: shopItem.id,
+    quantity: 1,
+    active: true,
+    equipped: true,
+    asset_type: shopItem.item_type,
+    name: shopItem.name,
+    description: shopItem.description,
+    item_type: shopItem.item_type,
+    slot: shopItem.slot,
+    rarity: shopItem.rarity,
+    cost: shopItem.price_gold,
+    has_visual: shopItem.has_visual,
+    render_layer: renderLayer,
+    asset_variant: shopItem.asset_variant,
+    item: {
+      id: shopItem.id,
+      name: shopItem.name,
+      description: shopItem.description,
+      item_type: shopItem.item_type,
+      slot: shopItem.slot,
+      rarity: shopItem.rarity,
+      stats: {},
+      cost: shopItem.price_gold,
+      number_available: shopItem.quantity_available ?? 0,
+      is_active: true,
+      has_visual: shopItem.has_visual,
+      render_layer: renderLayer,
+      asset_variant: shopItem.asset_variant,
+    },
+  };
+};
+
 const Shop: React.FC = () => {
-  const { user, refreshUser } = useUser();
+  const { user, background, refreshUser } = useUser();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -78,6 +125,7 @@ const Shop: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [purchasingItemId, setPurchasingItemId] = useState<number | null>(null);
   const [localGold, setLocalGold] = useState<number | null>(null);
+  const [equippedVisualItems, setEquippedVisualItems] = useState<UserInventory[]>([]);
 
   const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
   const borderColor = useColorModeValue('green.400', 'green.400');
@@ -108,6 +156,26 @@ const Shop: React.FC = () => {
   useEffect(() => {
     loadShop();
   }, [loadShop]);
+
+  useEffect(() => {
+    const loadEquippedVisualItems = async () => {
+      if (!user?.character) {
+        setEquippedVisualItems([]);
+        return;
+      }
+
+      try {
+        const response = await assetsAPI.getUserInventory();
+        const inventory: UserInventory[] = response.items ?? response.inventory ?? [];
+        setEquippedVisualItems(inventory.filter(isVisualEquippedItem));
+      } catch (err) {
+        console.error('Failed to load equipped visual items for shop preview:', err);
+        setEquippedVisualItems([]);
+      }
+    };
+
+    loadEquippedVisualItems();
+  }, [user?.character]);
 
   const availableTypes = useMemo(() => {
     const types = new Set(shopItems.map((item) => item.item_type).filter(Boolean));
@@ -302,6 +370,24 @@ const Shop: React.FC = () => {
               const isPurchasing = purchasingItemId === item.id;
               const isDisabled = isOwned || isOutOfStock || cannotAfford || isPurchasing;
               const previewUrl = item.asset_variant?.preview_url ?? item.asset_variant?.idle_url;
+              const canPreviewOnAvatar = item.has_visual && !!item.asset_variant && !!user?.character;
+              const previewEquippedItems = canPreviewOnAvatar
+                ? [
+                    ...equippedVisualItems.filter((inventoryItem) => {
+                      const inventoryData = getInventoryItem(inventoryItem);
+                      const inventoryItemType = inventoryData.item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
+                      const inventorySlot = inventoryData.slot ?? inventoryItem.slot;
+
+                      if (inventoryData.id === item.id || inventoryItem.item_id === item.id) return false;
+                      if (item.item_type === 'apparel' && item.slot && inventoryItemType === 'apparel') {
+                        return inventorySlot !== item.slot;
+                      }
+
+                      return true;
+                    }),
+                    createShopPreviewItem(item),
+                  ]
+                : [];
 
               return (
                 <Card
@@ -325,8 +411,22 @@ const Shop: React.FC = () => {
                         justifyContent="center"
                         overflow="hidden"
                       >
-                        {previewUrl ? (
-                          <Image src={previewUrl} alt={item.name} maxH="160px" maxW="100%" objectFit="contain" />
+                        {canPreviewOnAvatar && user?.character ? (
+                          <AvatarScene
+                            background={background}
+                            character={user.character}
+                            equippedItems={previewEquippedItems}
+                            spriteOffsetY={22}
+                          />
+                        ) : previewUrl ? (
+                          <Box
+                            as="img"
+                            src={previewUrl}
+                            alt={item.name}
+                            maxH="160px"
+                            maxW="100%"
+                            objectFit="contain"
+                          />
                         ) : (
                           <VStack color="green.700">
                             <PackageIcon size={48} />
@@ -356,7 +456,6 @@ const Shop: React.FC = () => {
 
                         <HStack spacing={2} flexWrap="wrap">
                           <Badge colorScheme={rarityColor}>{formatLabel(item.rarity)}</Badge>
-                          {item.has_visual && <Badge colorScheme="cyan">Visual</Badge>}
                           {item.quantity_available !== null && (
                             <Badge colorScheme="orange">{item.quantity_available} left</Badge>
                           )}
