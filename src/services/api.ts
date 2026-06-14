@@ -203,6 +203,16 @@ export const achievementAPI = {
 export const assetsAPI = {
   // Get active background
   getActiveBackground: () => apiRequest('/api/assets/background'),
+  // List purchasable shop items
+  getShop: () => apiRequest('/api/assets/shop'),
+  // Purchase a shop item with gold
+  purchaseShopItem: (itemId: number) =>
+    apiRequest('/api/assets/shop/purchase', {
+      method: 'POST',
+      body: JSON.stringify({ item_id: itemId }),
+    }),
+  // Full item catalog, including shop listings and unlockable items
+  getCatalog: () => apiRequest('/api/assets/catalog'),
   // List user's owned backgrounds
   getBackgrounds: () => apiRequest('/api/assets/backgrounds'),
   // Equip a background by id

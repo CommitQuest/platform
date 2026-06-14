@@ -121,7 +121,7 @@ const AvatarScene: React.FC<AvatarSceneProps> = ({
   };
 
   return (
-    <Box position="absolute" inset={0} overflow="hidden">
+    <Box position="absolute" inset={0} overflow="hidden" isolation="isolate" zIndex={0}>
       {BACKGROUND_KEYS.map((key, index) => {
         const layerUrl = background?.[key];
         if (!layerUrl) return null;

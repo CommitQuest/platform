@@ -43,7 +43,7 @@ const Header: React.FC = () => {
       py={4}
       position="sticky"
       top={0}
-      zIndex={11}
+      zIndex={1000}
     >
       <Flex justify="space-between" align="center" maxW="container.xl" mx="auto">
         <Heading size="md" color="green.400" cursor="pointer" onClick={() => window.location.href = '/'}>

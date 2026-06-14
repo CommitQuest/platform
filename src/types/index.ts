@@ -95,28 +95,28 @@ export interface GithubConnection {
 // Shop types
 export interface ShopItem {
   id: number;
-  item_id: number;
-  price: number;
-  is_available: boolean;
-  stock_quantity: number;
-  item: {
-    id: number;
-    name: string;
-    description: string;
-    item_type: string;
-    rarity: string;
-    asset_url?: string;
-  };
+  slug: string;
+  name: string;
+  description: string;
+  item_type: string;
+  slot?: string | null;
+  rarity: string;
+  has_visual: boolean;
+  render_layer?: 'front' | 'back' | 'both' | null;
+  price_gold: number;
+  quantity_available: number | null;
+  owned_quantity: number;
+  asset_variant?: ItemAssetVariant | null;
 }
 
-export interface Purchase {
-  id: number;
-  user_id: number;
-  shop_item_id: number;
-  quantity: number;
-  price_paid: number;
-  purchased_at: string;
-  item_name: string;
+export interface ShopResponse {
+  shop: ShopItem[];
+}
+
+export interface ShopPurchaseResponse {
+  success: boolean;
+  item: ShopItem;
+  gold_remaining: number;
 }
 
 // Stats types
