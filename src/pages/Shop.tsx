@@ -376,14 +376,9 @@ const Shop: React.FC = () => {
                     ...equippedVisualItems.filter((inventoryItem) => {
                       const inventoryData = getInventoryItem(inventoryItem);
                       const inventoryItemType = inventoryData.item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
-                      const inventorySlot = inventoryData.slot ?? inventoryItem.slot;
 
                       if (inventoryData.id === item.id || inventoryItem.item_id === item.id) return false;
-                      if (item.item_type === 'apparel' && item.slot && inventoryItemType === 'apparel') {
-                        return inventorySlot !== item.slot;
-                      }
-
-                      return true;
+                      return inventoryItemType !== item.item_type;
                     }),
                     createShopPreviewItem(item),
                   ]
