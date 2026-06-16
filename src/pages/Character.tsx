@@ -215,8 +215,9 @@ const Inventory: React.FC = () => {
                             src={iconUrl} 
                             alt={getInventoryItemName(inventoryItem)}
                             borderRadius="md"
-                            width="60px"
-                            height="60px"
+                            width="80px"
+                            height="80px"
+                            transform="scale(2)"
                             objectFit="cover"
                             fallbackSrc="https://via.placeholder.com/60x60/2a2a2a/666666?text=Item"
                           />
@@ -315,14 +316,18 @@ const Inventory: React.FC = () => {
     <Box>
       <VStack spacing={6} align="stretch">
         {/* Header with Character Info and Apparel */}
-        <HStack spacing={6} align="start">
+        <HStack spacing={6} align="stretch">
           <Box
-            bg="commitQuest.surface"
             borderRadius="md"
             border="2px"
-            borderColor="green.400"
-            minW="120px"
-            minH="120px"
+            borderColor="green.500"
+            maxW="240px"
+            maxH="240px"
+            minW="240px"
+            minH="240px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
             flexShrink={0}
             position="relative"
             overflow="hidden"
@@ -331,7 +336,7 @@ const Inventory: React.FC = () => {
               background={background}
               character={character}
               equippedItems={equippedVisualItems}
-              spriteScale={1.8}
+              spriteOffsetY={40}
             />
           </Box>
 

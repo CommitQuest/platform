@@ -273,7 +273,7 @@ const Shop: React.FC = () => {
                 </Box>
                 <Box>
                   <Heading size="lg" color="green.400">
-                    Adventurer&apos;s Shop
+                    Shop
                   </Heading>
                   <Text color="green.300">
                     Spend gold on gear, companions, auras, and collectibles.
@@ -397,24 +397,27 @@ const Shop: React.FC = () => {
                 >
                   <CardBody>
                     <VStack align="stretch" spacing={4} h="full">
-                      <Box
-                        bg={surfaceBg}
-                        borderRadius="xl"
-                        border="1px solid"
-                        borderColor="green.800"
-                        h="180px"
-                        position="relative"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        overflow="hidden"
-                      >
+                    <Box
+                      borderRadius="md"
+                      border="2px"
+                      borderColor="green.500"
+                      maxW="240px"
+                      maxH="240px"
+                      minW="240px"
+                      minH="240px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      flexShrink={0}
+                      position="relative"
+                      overflow="hidden"
+                    >
                         {canPreviewOnAvatar ? (
                           <AvatarScene
                             background={background}
                             character={user.character}
                             equippedItems={getPreviewEquippedItems(item)}
-                            spriteScale={1.45}
+                            spriteOffsetY={40}
                           />
                         ) : (
                           <VStack color="green.700">
