@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { authAPI, userAPI, assetsAPI, isLoggedIn } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { authAPI, userAPI, assetsAPI, characterAPI, isLoggedIn } from '../services/api';
+import { getOrCreateSocket, disconnectSocket } from '../services/socket';
+import { mergeCommitStats } from '../utils/commitEvent';
+import { isVisualEquippedItem } from '../utils/inventory';
+import type { CommitEvent, InventoryResponse, UserInventory } from '../types';
 
 // User data types
 interface Character {
@@ -91,6 +95,8 @@ interface AuthSession {
   character?: Character | null;
 }
 
+export type AvatarSceneState = 'idle' | 'celebration';
+
 interface UserContextType {
   user: UserData | null;
   session: AuthSession | null;
@@ -99,10 +105,14 @@ interface UserContextType {
   background: Background | null;
   loading: boolean;
   error: string | null;
+  avatarSceneState: AvatarSceneState;
+  equippedVisualItems: UserInventory[];
+  lastCommitEvent: CommitEvent | null;
   refreshUser: () => Promise<void>;
   refreshSession: () => Promise<AuthSession | null>;
   clearUser: () => void;
   refreshBackground: () => Promise<void>;
+  refreshEquippedItems: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -111,12 +121,51 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
+/**
+ * If the backend doesn't populate avatar_assets with celebration URLs,
+ * derive them from the character's avatar_option_id + species.avatar_options.
+ */
+function resolveAvatarAssets(character: Character | null): Character['avatar_assets'] | undefined {
+  if (!character) return undefined;
+  if (character.avatar_assets?.celebration && character.avatar_assets?.idle) {
+    return character.avatar_assets;
+  }
+  const optionId = character.avatar_option_id;
+  const options = character.species?.avatar_options ?? character.avatar_options ?? [];
+  const match = optionId != null ? options.find((o) => o.id === optionId) : options[0];
+  if (match) {
+    return {
+      idle: match.idle_url ?? character.avatar_assets?.idle ?? character.avatar_url,
+      celebration: match.celebration_url ?? match.idle_url ?? character.avatar_assets?.idle ?? character.avatar_url,
+    };
+  }
+  return character.avatar_assets;
+}
+
+function enrichCharacterAssets(userData: any): any {
+  if (!userData?.character) return userData;
+  return {
+    ...userData,
+    character: {
+      ...userData.character,
+      avatar_assets: resolveAvatarAssets(userData.character),
+    },
+  };
+}
+
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [background, setBackground] = useState<Background | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [avatarSceneState, setAvatarSceneState] = useState<AvatarSceneState>('idle');
+  const [equippedVisualItems, setEquippedVisualItems] = useState<UserInventory[]>([]);
+  const [lastCommitEvent, setLastCommitEvent] = useState<CommitEvent | null>(null);
+
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const socketConnectedRef = useRef(false);
+  const avatarAssetsRef = useRef<Character['avatar_assets'] | undefined>(undefined);
 
   const fetchSession = useCallback(async (): Promise<AuthSession | null> => {
     if (!isLoggedIn()) {
@@ -129,15 +178,32 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     return sessionResponse;
   }, []);
 
-  const fetchUserData = useCallback(async () => {
+  const fetchEquippedItems = useCallback(async () => {
+    if (!isLoggedIn()) {
+      setEquippedVisualItems([]);
+      return;
+    }
+
     try {
-      setLoading(true);
+      const response = (await assetsAPI.getUserInventory()) as InventoryResponse;
+      const inventory = response.items ?? response.inventory ?? [];
+      setEquippedVisualItems(inventory.filter(isVisualEquippedItem));
+    } catch (err) {
+      console.error('Error loading equipped items:', err);
+      setEquippedVisualItems([]);
+    }
+  }, []);
+
+  const fetchUserData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
       setError(null);
       
       if (!isLoggedIn()) {
         setUser(null);
         setSession(null);
         setBackground(null);
+        setEquippedVisualItems([]);
         return;
       }
 
@@ -145,34 +211,55 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (currentSession?.needsCharacter === true) {
         setUser(null);
         setBackground(null);
+        setEquippedVisualItems([]);
         return;
       }
 
-      // Fetch user data and background in parallel
       const [userResponse, backgroundResponse] = await Promise.allSettled([
         userAPI.getUserWeb(),
         assetsAPI.getActiveBackground()
       ]);
-      console.log('User response:', userResponse);
-      console.log('Background response:', backgroundResponse);
       
-      // Handle user data
+      let userData: any = null;
       if (userResponse.status === 'fulfilled') {
-        setUser(userResponse.value.user);
+        userData = enrichCharacterAssets(userResponse.value.user);
+
+        // If celebration URL is still missing, fetch species data to resolve it
+        if (userData?.character && !userData.character.avatar_assets?.celebration) {
+          try {
+            const speciesData = await characterAPI.getSpecies();
+            const speciesList = speciesData.species ?? speciesData ?? [];
+            const charSpecies = speciesList.find((s: any) => s.id === userData.character.species_id || s.id === userData.character.species?.id);
+            if (charSpecies?.avatar_options) {
+              userData = {
+                ...userData,
+                character: {
+                  ...userData.character,
+                  species: { ...userData.character.species, avatar_options: charSpecies.avatar_options },
+                },
+              };
+              userData = enrichCharacterAssets(userData);
+            }
+          } catch { /* non-critical */ }
+        }
+
+        avatarAssetsRef.current = userData?.character?.avatar_assets;
+        console.log('[CommitQuest] Resolved avatar_assets:', avatarAssetsRef.current);
+        setUser(userData);
       } else {
         console.error('Error fetching user data:', userResponse.reason);
         setError('Failed to fetch user data');
         setUser(null);
       }
 
-      // Handle background data
       if (backgroundResponse.status === 'fulfilled') {
         setBackground(backgroundResponse.value.background);
       } else {
         console.error('Error fetching background:', backgroundResponse.reason);
-        // Don't set error for background failure, just use null
         setBackground(null);
       }
+
+      await fetchEquippedItems();
 
     } catch (err) {
       console.error('Error in fetchUserData:', err);
@@ -180,9 +267,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setUser(null);
       setBackground(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [fetchSession]);
+  }, [fetchSession, fetchEquippedItems]);
 
   const fetchBackground = useCallback(async () => {
     try {
@@ -211,13 +298,119 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     await fetchBackground();
   }, [fetchBackground]);
 
+  const refreshEquippedItems = useCallback(async () => {
+    await fetchEquippedItems();
+  }, [fetchEquippedItems]);
+
   const clearUser = useCallback(() => {
     setUser(null);
     setSession(null);
     setBackground(null);
     setError(null);
+    setEquippedVisualItems([]);
+    setLastCommitEvent(null);
+    setAvatarSceneState('idle');
+    disconnectSocket();
+    socketConnectedRef.current = false;
   }, []);
 
+  // Keep refs to latest versions of handlers so the socket effect never re-runs
+  const fetchEquippedItemsRef = useRef(fetchEquippedItems);
+  fetchEquippedItemsRef.current = fetchEquippedItems;
+  const fetchUserDataRef = useRef(fetchUserData);
+  fetchUserDataRef.current = fetchUserData;
+
+  // Socket lifecycle: connect once when session is ready, disconnect on logout/unmount
+  useEffect(() => {
+    const shouldConnect = isLoggedIn() && session && !session.needsCharacter;
+
+    if (!shouldConnect) {
+      if (socketConnectedRef.current) {
+        disconnectSocket();
+        socketConnectedRef.current = false;
+      }
+      return;
+    }
+
+    const sock = getOrCreateSocket();
+    if (!sock) return;
+    socketConnectedRef.current = true;
+
+    const handleCommit = (event: CommitEvent) => {
+      console.log('[CommitQuest] commit event received:', { celebrate: event.celebrate, type: event.type, stats: !!event.stats });
+      const merged = mergeCommitStats(event);
+
+      setUser((prev) => {
+        if (!prev) return prev;
+
+        const existingIds = new Set(prev.achievements.map((a) => a.id));
+        const newAchievements = (event.newAchievements ?? []).filter((a) => !existingIds.has(a.id));
+
+        const cachedAssets = avatarAssetsRef.current;
+
+        return {
+          ...prev,
+          ...merged,
+          character: prev.character
+            ? {
+                ...prev.character,
+                level: merged.level,
+                xp: merged.levelProgress.expInCurrentLevel,
+                xpToNext: merged.levelProgress.expNeededForNextLevel,
+                avatar_assets: prev.character.avatar_assets ?? cachedAssets,
+              }
+            : prev.character,
+          achievements: newAchievements.length > 0
+            ? [...prev.achievements, ...newAchievements.map((a) => ({ id: a.id, name: a.name, description: a.description, type: a.type, criteria: {}, metadata: {} }))]
+            : prev.achievements,
+        };
+      });
+
+      setLastCommitEvent(event);
+
+      if (event.autoUnlockedItems?.length > 0) {
+        fetchEquippedItemsRef.current();
+      }
+
+      // Always celebrate on commit events
+      if (celebrationTimerRef.current) {
+        clearTimeout(celebrationTimerRef.current);
+      }
+      console.log('[CommitQuest] Starting celebration, avatar_assets:', avatarAssetsRef.current);
+      setAvatarSceneState('celebration');
+      celebrationTimerRef.current = setTimeout(() => {
+        setAvatarSceneState('idle');
+        celebrationTimerRef.current = null;
+      }, 3000);
+    };
+
+    const handleConnect = () => {
+      fetchUserDataRef.current(true);
+    };
+
+    sock.off('commit').on('commit', handleCommit);
+    sock.off('connect').on('connect', handleConnect);
+
+    return () => {
+      sock.off('commit', handleCommit);
+      sock.off('connect', handleConnect);
+    };
+  // Only re-run when session identity actually changes (login/logout/character creation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.needsCharacter, session?.user?.id]);
+
+  // Cleanup on full unmount
+  useEffect(() => {
+    return () => {
+      disconnectSocket();
+      socketConnectedRef.current = false;
+      if (celebrationTimerRef.current) {
+        clearTimeout(celebrationTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Initial data load
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
@@ -230,10 +423,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     background,
     loading,
     error,
+    avatarSceneState,
+    equippedVisualItems,
+    lastCommitEvent,
     refreshUser,
     refreshSession,
     clearUser,
     refreshBackground,
+    refreshEquippedItems,
   };
 
   return (
@@ -251,4 +448,4 @@ export const useUser = (): UserContextType => {
   return context;
 };
 
-export default UserContext; 
+export default UserContext;

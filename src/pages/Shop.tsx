@@ -30,7 +30,8 @@ import { FiPackage, FiShoppingBag } from 'react-icons/fi';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
 import AvatarScene from '../components/character/AvatarScene';
-import type { InventoryResponse, Item, ShopItem, ShopPurchaseResponse, ShopResponse, UserInventory } from '../types';
+import { getInventoryItemType, getInventoryItemSlot } from '../utils/inventory';
+import type { ShopItem, ShopPurchaseResponse, ShopResponse, UserInventory } from '../types';
 
 // Cast so TS accepts these as JSX components (react-icons types conflict with React 19)
 const ShopIcon = FiShoppingBag as React.ComponentType<{ size?: number }>;
@@ -63,20 +64,6 @@ const getRarityColor = (rarity: string) => {
       return 'green';
   }
 };
-
-const getInventoryItem = (inventoryItem: UserInventory): Partial<Item & UserInventory> =>
-  (inventoryItem.items ?? inventoryItem.item ?? inventoryItem) as Partial<Item & UserInventory>;
-
-const getInventoryItemType = (inventoryItem: UserInventory) =>
-  getInventoryItem(inventoryItem).item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
-
-const getInventoryItemSlot = (inventoryItem: UserInventory) =>
-  getInventoryItem(inventoryItem).slot ?? inventoryItem.slot ?? null;
-
-const isVisualItem = (inventoryItem: UserInventory) =>
-  inventoryItem.equipped === true &&
-  (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true &&
-  !!(getInventoryItem(inventoryItem).asset_variant ?? inventoryItem.asset_variant);
 
 const shouldReplaceEquippedItem = (equippedItem: UserInventory, shopItem: ShopItem) => {
   if (getInventoryItemType(equippedItem) !== shopItem.item_type) return false;
@@ -116,7 +103,7 @@ const createPreviewInventoryItem = (shopItem: ShopItem): UserInventory => ({
 });
 
 const Shop: React.FC = () => {
-  const { user, background, refreshUser } = useUser();
+  const { user, background, refreshUser, equippedVisualItems } = useUser();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -129,7 +116,6 @@ const Shop: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [purchasingItemId, setPurchasingItemId] = useState<number | null>(null);
   const [localGold, setLocalGold] = useState<number | null>(null);
-  const [equippedVisualItems, setEquippedVisualItems] = useState<UserInventory[]>([]);
 
   const cardBg = useColorModeValue('commitQuest.panel', 'commitQuest.panel');
   const borderColor = useColorModeValue('green.400', 'green.400');
@@ -160,26 +146,6 @@ const Shop: React.FC = () => {
   useEffect(() => {
     loadShop();
   }, [loadShop]);
-
-  useEffect(() => {
-    const loadInventory = async () => {
-      if (!user) {
-        setEquippedVisualItems([]);
-        return;
-      }
-
-      try {
-        const response = (await assetsAPI.getUserInventory()) as InventoryResponse;
-        const inventory = response.items ?? response.inventory ?? [];
-        setEquippedVisualItems(inventory.filter(isVisualItem));
-      } catch (err) {
-        console.error('Error loading equipped items for shop preview:', err);
-        setEquippedVisualItems([]);
-      }
-    };
-
-    loadInventory();
-  }, [user]);
 
   const getPreviewEquippedItems = useCallback(
     (shopItem: ShopItem) => {

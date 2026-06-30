@@ -22,9 +22,19 @@ import {
 } from '@chakra-ui/react';
 import { useUser } from '../contexts/UserContext';
 import { assetsAPI } from '../services/api';
-import { UserInventory, InventoryResponse, Item } from '../types';
+import { UserInventory, InventoryResponse } from '../types';
 import { generateBackgroundLayers, generateForegroundLayers } from '../utils/backgroundLayers';
 import AvatarScene from '../components/character/AvatarScene';
+import {
+  getInventoryItem,
+  getInventoryItemId,
+  getInventoryItemType,
+  getInventoryItemName,
+  getInventoryItemDescription,
+  getInventoryItemRarity,
+  getInventoryItemIcon,
+  isVisualItem,
+} from '../utils/inventory';
 
 interface OwnedBackground {
   id: number;
@@ -40,24 +50,8 @@ interface OwnedBackground {
   equipped: boolean;
 }
 
-const getInventoryItem = (inventoryItem: UserInventory): Partial<Item & UserInventory> =>
-  (inventoryItem.items ?? inventoryItem.item ?? inventoryItem) as Partial<Item & UserInventory>;
-const getInventoryItemId = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).id ?? inventoryItem.item_id;
-const getInventoryItemType = (inventoryItem: UserInventory) =>
-  getInventoryItem(inventoryItem).item_type ?? inventoryItem.item_type ?? inventoryItem.asset_type;
-const getInventoryItemName = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).name ?? inventoryItem.name ?? 'Unknown item';
-const getInventoryItemDescription = (inventoryItem: UserInventory) =>
-  getInventoryItem(inventoryItem).description ?? inventoryItem.description ?? '';
-const getInventoryItemRarity = (inventoryItem: UserInventory) => getInventoryItem(inventoryItem).rarity ?? inventoryItem.rarity ?? 'common';
-const getInventoryItemIcon = (inventoryItem: UserInventory) => {
-  const item = getInventoryItem(inventoryItem);
-  return item.asset_variant?.preview_url ?? inventoryItem.asset_variant?.preview_url ?? item.file_path;
-};
-const isVisualItem = (inventoryItem: UserInventory) =>
-  (getInventoryItem(inventoryItem).has_visual ?? inventoryItem.has_visual) === true;
-
 const Inventory: React.FC = () => {
-  const { user, background, loading, error, refreshBackground } = useUser();
+  const { user, background, loading, error, refreshBackground, avatarSceneState, equippedVisualItems: contextEquippedItems, refreshEquippedItems } = useUser();
   const [inventory, setInventory] = useState<UserInventory[]>([]);
   const [backgrounds, setBackgrounds] = useState<OwnedBackground[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
@@ -107,6 +101,7 @@ const Inventory: React.FC = () => {
         await assetsAPI.equipItem(itemId, item.slot ?? inventoryItem.slot);
       }
       await refreshInventory();
+      await refreshEquippedItems();
     } catch (err) {
       console.error('Failed to update item equipment:', err);
       setInventoryError('Failed to update item equipment');
@@ -154,7 +149,6 @@ const Inventory: React.FC = () => {
   }, [user]);
 
   // Filter inventory by asset type
-  const equippedVisualItems = inventory.filter((item) => item.equipped === true && isVisualItem(item));
   const items = inventory.filter(item => getInventoryItemType(item) === 'item');
   const apparel = inventory.filter(item => getInventoryItemType(item) === 'apparel');
   const auras = inventory.filter(item => getInventoryItemType(item) === 'aura');
@@ -335,7 +329,8 @@ const Inventory: React.FC = () => {
             <AvatarScene
               background={background}
               character={character}
-              equippedItems={equippedVisualItems}
+              equippedItems={contextEquippedItems}
+              state={avatarSceneState}
               spriteOffsetY={40}
             />
           </Box>

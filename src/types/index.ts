@@ -203,4 +203,51 @@ export interface InventoryResponse {
   items?: UserInventory[];
   backgrounds?: any[];
   count: number;
+}
+
+// Real-time commit event types (Socket.IO)
+
+export interface CommitEventStats {
+  level: number;
+  experience: number;
+  commitRate: string;
+  totalCommits: number;
+  currentStreak: number;
+  longestStreak: number;
+  levelProgress: {
+    currentLevel: number;
+    expInCurrentLevel: number;
+    expNeededForNextLevel: number;
+    progress: number;
+    totalExp: number;
+  };
+}
+
+export interface CommitEventAchievement {
+  id: number;
+  type: string;
+  name: string;
+  description: string;
+  item: any | null;
+}
+
+export interface AutoUnlockedItem {
+  id: number;
+  name: string;
+  item_type: string;
+  rarity: string;
+}
+
+export interface CommitEvent {
+  type: 'commit';
+  celebrate: boolean;
+  commits: { message: string; id: string }[];
+  stats: CommitEventStats;
+  gold: number;
+  xpGained: number;
+  goldGained: number;
+  newAchievements: CommitEventAchievement[];
+  autoUnlockedItems: AutoUnlockedItem[];
+  repository: string;
+  timestamp: string;
 } 
